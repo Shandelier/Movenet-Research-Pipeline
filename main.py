@@ -1,13 +1,10 @@
 import tensorflow as tf
-import tensorflow_hub as hub
 import numpy as np
 import time
 import argparse
 import os
 from tqdm import tqdm
 
-# Import matplotlib libraries
-from matplotlib import pyplot as plt
 
 import util
 import drawing_util as du
