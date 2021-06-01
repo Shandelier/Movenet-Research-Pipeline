@@ -32,6 +32,7 @@ KEYPOINT_DICT = {
     'right_ankle': 16
 }
 
+
 # Maps bones to a matplotlib color name.
 KEYPOINT_EDGE_INDS_TO_COLOR = {
     (0, 1): 'm',
@@ -189,13 +190,13 @@ def to_gif(images, fps):
     return embed.embed_file('./animation.gif')
 
 
-# def progress(value, max=100):
-#     return HTML("""
-#       <progress
-#           value='{value}'
-#           max='{max}',
-#           style='width: 100%'
-#       >
-#           {value}
-#       </progress>
-#   """.format(value=value, max=max))
+def progress(value, max=100):
+    return HTML("""
+      <progress
+          value='{value}'
+          max='{max}',
+          style='width: 100%'
+      >
+          {value}
+      </progress>
+  """.format(value=value, max=max))

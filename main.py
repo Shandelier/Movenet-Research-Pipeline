@@ -5,68 +5,79 @@ import argparse
 import os
 from tqdm import tqdm
 
+# Import matplotlib libraries
+from datetime import datetime
 
-import util
-import drawing_util as du
+import util as ut
+import save_utils as su
 import cropping as cr
 
 
 parser = argparse.ArgumentParser()
-
 parser.add_argument('--model', type=str, default='li')
 parser.add_argument('--input', type=str, default='./input')
 parser.add_argument('--output', type=str, default='./output')
-parser.add_argument('--n_images', type=int, default=100)
+parser.add_argument('--n_images', type=int, default=0)
+parser.add_argument("--pose", type=int, default=0)  # 0-straight, 1-slouche
 args = parser.parse_args()
 
+if args.input == args.output:
+    print(
+        "[WARNING] input dir is the same as output dir -- the pictures will be overwritten"
+    )
+    print("Do you wish to continue?: y/n")
+    if input() != "y":
+        exit()
 
-# @param ["movenet_thunder", "movenet_lightning"]
-model_name = "movenet_lightning"
+# get input folder name to create output file name
+input_dir_name = os.path.basename(args.input).split("./", 1)[0]
+start_date = datetime.now().strftime("--%H-%M--%d-%m-%Y")
+output_pic_dir_name = args.output + "/" + input_dir_name + start_date
+output_csv_dir_name = args.output + "/" + input_dir_name + start_date + ".csv"
+if not os.path.exists(output_pic_dir_name):
+    os.makedirs(output_pic_dir_name)
 
-if (model_name == "movenet_lightning" or model_name == 'li'):
-    module = tf.saved_model.load(
-        "./models/lightning")
-    input_size = 192
-elif (model_name == "movenet_thunder" or model_name == 'th'):
-    module = tf.saved_model.load("./models/thunder")
-    input_size = 256
-else:
-    raise ValueError("Unsupported model name: %s" % model_name)
 
-movenet = module.signatures['serving_default']
+movenet, input_size = ut.choose_model(args.model)
 
-n_images = args.n_images
-filenames = [
-    f.path for f in os.scandir(args.input) if f.is_file() and f.path.endswith(('.png', '.jpg'))]
-if len(filenames) > n_images:
-    filenames = filenames[:n_images]
+# TODO: sort files according to system sorting not python
+filenames = ut.get_filenames(args.n_images, args.input)
+n_images = len(filenames)
 
 initial_image = tf.io.read_file(filenames[0])
 initial_image = tf.image.decode_jpeg(initial_image)
-
-n_images = len(filenames)
 image_height, image_width, _ = initial_image.shape
 crop_region = cr.init_crop_region(image_height, image_width)
 
-output_images = []
+# output_images = []
 start = time.time()
+
+# PREPARE CSV FILE
+csv_file = open(output_csv_dir_name, "ab")
+np.savetxt(csv_file, su.KEYPOINT_LABELS, delimiter=",", fmt="%s")
 
 for fname in tqdm(filenames, desc="FILE", ascii=True, total=n_images):
     # Load the input image.
-
     image = tf.io.read_file(fname)
     image = tf.image.decode_jpeg(image)
     keypoints_with_scores = cr.run_inference(
         movenet, image[:, :, :], crop_region,
         crop_size=[input_size, input_size])
-    output_images.append(du.draw_prediction_on_image(
-        image[:, :, :].numpy().astype(np.int32),
-        keypoints_with_scores, crop_region=None,
-        close_figure=True, output_image_height=image_height))
+
+    write = np.hstack([fname,
+                      args.pose,
+                      np.squeeze(keypoints_with_scores).flatten()]).reshape([1, 53])
+    np.savetxt(csv_file, write, delimiter=",", fmt='%s')
+
+    # output_images.append(du.draw_prediction_on_image(
+    #     image[:, :, :].numpy().astype(np.int32),
+    #     keypoints_with_scores, crop_region=None,
+    #     close_figure=True, output_image_height=image_height))
     crop_region = cr.determine_crop_region(
         keypoints_with_scores, image_height, image_width)
 
 print(': : : Average FPS:', n_images / (time.time() - start))
+csv_file.close()
 
-output = np.stack(output_images, axis=0)
-du.to_gif(output, fps=10)
+# output = np.stack(output_images, axis=0)
+# du.to_gif(output, fps=10)
