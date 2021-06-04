@@ -1,33 +1,25 @@
-import argparse
 import os
-import time
 import subprocess as sub
-from tqdm import tqdm
-from datetime import datetime
-
 import util as ut
-import save_utils as su
-import cropping as cr
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--input', type=str, default='./video')
-parser.add_argument('--output', type=str, default='./input')
-args = parser.parse_args()
 
 
-# get input folder name, and sample class to create output dirs
-input_file_paths, input_file_names, pose_type = ut.get_vid_paths_and_names(
-    args.input)
+def vid2pic(input, output):
+    # get input folder name, and sample class to create output dirs
+    input_file_paths, input_file_names, pose_type = ut.get_vid_paths_and_names(
+        input)
 
-output_pic_dir_path = [os.path.join(args.output, p) for p in input_file_names]
-for p in output_pic_dir_path:
-    if not os.path.exists(p):
-        os.makedirs(p)
+    output_pic_dir_path = [os.path.join(output, p) for p in input_file_names]
+    for p in output_pic_dir_path:
+        if not os.path.exists(p):
+            os.makedirs(p)
 
-for i, (pi, po) in enumerate(zip(input_file_paths, output_pic_dir_path)):
-    # zajebanie komendy ffmpeg
-    bash_cmd = ["ffmpeg", "-i", pi, "-qmin", "1", "-q:v", "1", "-ss", "00:00:00",
-                "-t", "00:00:02", "-async", "1", po+"/%07d.jpg"]
+    for i, (pi, po) in enumerate(zip(input_file_paths, output_pic_dir_path)):
+        # ffmpeg -qmin 0 -qmax 1 are the best quality parameters
+        print("Segment to pictures ", pi)
+        bash_cmd = ["ffmpeg", pi, "-qmin", "0", "-qmax",
+                    "1", "-q:v", "1", "-async", "1", po + "/%07d.jpg"]
+        process = sub.Popen(bash_cmd)
+        # save bash command output and errorlog
+        outlog, error = process.communicate()
 
-    process = sub.Popen(bash_cmd)
-    output, error = process.communicate()
+    return input_file_paths, input_file_names, output_pic_dir_path, pose_type
