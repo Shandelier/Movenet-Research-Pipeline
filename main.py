@@ -26,8 +26,11 @@ args = parser.parse_args()
 
 
 def main():
-    input_pic_paths, input_pic_names, output_pic_dir_path, pose_type = v2p.vid2pic(
+    input_vid_names, pic_dir_paths, pose_type = v2p.vid2pic(
         args.video, args.pic)
-    mn.movenet(input_pic_paths, input_pic_names,
-               output_pic_dir_path, pose_type, args.model)
+    mn.movenet(pic_dir_paths, input_vid_names,
+               args.csv, pose_type, args.model)
     print("STOP")
+
+
+main()

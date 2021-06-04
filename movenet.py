@@ -11,24 +11,18 @@ import save_utils as su
 import cropping as cr
 
 
-def movenet(pic_path, pic_dir_name, output_path, pose_type, model_type="li"):
-    if pic_path == output_path:
-        print(
-            "[WARNING] input dir is the same as output dir -- the pictures will be overwritten"
-        )
-        print("Do you wish to continue?: y/n")
-        if input() != "y":
-            exit()
-
+def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
     # get input folder name to create output file name
     # input_dir_name = os.path.basename(pic_path).split("./", 1)[0]
     # start_date = datetime.now().strftime("--%H-%M--%d-%m-%Y")
     # output_pic_dir_name = args.output + "/" + input_dir_name + start_date
-    output_csv_dir_name = os.path.join(output_path, pic_dir_name, ".csv")
+    output_csv_dir_names = [os.path.join(
+        op, pdn)+".csv" for i, (op, pdn) in enumerate(zip(output_path, pic_dir_names))]
+    # output_csv_dir_name = os.path.join(output_path, pic_dir_name)+".csv"
 
     movenet, input_size = ut.choose_model(model_type)
 
-    for i, (pp, ocsv) in enumerate(zip(pic_path, output_csv_dir_name)):
+    for i, (pp, ocsv) in enumerate(zip(pic_paths, output_csv_dir_names)):
         # TODO: sort files according to system sorting not python
         filenames = ut.get_filenames(0, pp)
         n_images = len(filenames)
@@ -42,7 +36,7 @@ def movenet(pic_path, pic_dir_name, output_path, pose_type, model_type="li"):
         start = time.time()
 
         # PREPARE CSV FILE
-        csv_file = open(output_csv_dir_name, "ab")
+        csv_file = open(ocsv, "ab")
         np.savetxt(csv_file, su.KEYPOINT_LABELS, delimiter=",", fmt="%s")
 
         for fname in tqdm(filenames, desc="FILE", ascii=True, total=n_images):

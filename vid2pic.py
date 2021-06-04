@@ -22,4 +22,4 @@ def vid2pic(input, output):
         # save bash command output and errorlog
         outlog, error = process.communicate()
 
-    return input_file_paths, input_file_names, output_pic_dir_path, pose_type
+    return input_file_names, output_pic_dir_path, pose_type
