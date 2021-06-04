@@ -24,10 +24,10 @@ for p in output_pic_dir_path:
     if not os.path.exists(p):
         os.makedirs(p)
 
-# for p in input_file_paths:
-# zajebanie komendy ffmpeg
-bash_cmd = ["ls", "."]
-process = sub.Popen(bash_cmd)
-output, error = process.communicate()
-print(output)
-print(error)
+for i, (pi, po) in enumerate(zip(input_file_paths, output_pic_dir_path)):
+    # zajebanie komendy ffmpeg
+    bash_cmd = ["ffmpeg", "-i", pi, "-qmin", "1", "-q:v", "1", "-ss", "00:00:00",
+                "-t", "00:00:02", "-async", "1", po+"/%07d.jpg"]
+
+    process = sub.Popen(bash_cmd)
+    output, error = process.communicate()
