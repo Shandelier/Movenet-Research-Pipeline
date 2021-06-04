@@ -16,8 +16,9 @@ def vid2pic(input, output):
     for i, (ip, op) in enumerate(zip(input_file_paths, output_pic_dir_path)):
         # ffmpeg -qmin 0 -qmax 1 are the best quality parameters
         print("Segment to pictures ", ip)
-        bash_cmd = ["ffmpeg", ip, "-qmin", "0", "-qmax",
-                    "1", "-q:v", "1", "-async", "1", op + "/%07d.jpg"]
+        out = os.path.join(op, "%07d.jpg")
+        bash_cmd = ["ffmpeg", "-i", ip, "-qmin", "0", "-qmax",
+                    "1", "-q:v", "1", "-async", "1", out]
         process = sub.Popen(bash_cmd)
         # save bash command output and errorlog
         outlog, error = process.communicate()
