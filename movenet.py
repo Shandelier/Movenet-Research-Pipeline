@@ -17,13 +17,12 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
     # start_date = datetime.now().strftime("--%H-%M--%d-%m-%Y")
     # output_pic_dir_name = args.output + "/" + input_dir_name + start_date
     output_csv_dir_names = [os.path.join(
-        op, pdn)+".csv" for i, (op, pdn) in enumerate(zip(output_path, pic_dir_names))]
+        output_path, pdn)+".csv" for i, pdn in enumerate(pic_dir_names)]
     # output_csv_dir_name = os.path.join(output_path, pic_dir_name)+".csv"
 
     movenet, input_size = ut.choose_model(model_type)
 
-    for i, (pp, ocsv) in enumerate(zip(pic_paths, output_csv_dir_names)):
-        # TODO: sort files according to system sorting not python
+    for i, (pp, ocsv, pose) in enumerate(zip(pic_paths, output_csv_dir_names, pose_type)):
         filenames = ut.get_filenames(0, pp)
         n_images = len(filenames)
 
@@ -48,7 +47,7 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
                 crop_size=[input_size, input_size])
 
             write = np.hstack([fname,
-                               pose_type, np.squeeze(keypoints_with_scores)
+                               pose, np.squeeze(keypoints_with_scores)
                                .flatten()]).reshape([1, 53])
             np.savetxt(csv_file, write, delimiter=",", fmt='%s')
 
