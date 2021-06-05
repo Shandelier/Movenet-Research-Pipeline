@@ -63,3 +63,4 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
 
     # output = np.stack(output_images, axis=0)
     # du.to_gif(output, fps=10)
+    return output_csv_dir_names

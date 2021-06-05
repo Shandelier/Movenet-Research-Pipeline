@@ -3,6 +3,7 @@ import os
 
 import movenet as mn
 import vid2pic as v2p
+import train as t
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default='./video')
@@ -22,9 +23,13 @@ def main():
     if not os.path.exists(args.csv):
         os.makedirs(args.csv)
 
-    mn.movenet(pic_dir_paths, input_vid_names,
-               args.csv, pose_type, args.model)
-    print("STOP")
+    csvs = mn.movenet(pic_dir_paths, input_vid_names,
+                      args.csv, pose_type, args.model)
+
+    if not os.path.exists(args.csv):
+        os.makedirs(args.csv)
+
+    t.train(csvs, args.csv)
 
 
 main()
