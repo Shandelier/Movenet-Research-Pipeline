@@ -1,67 +1,21 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
-# TOFO: refactor
-
-
-def get_model_128():
-    model = tf.keras.Sequential([
-        layers.Dense(22),
-        layers.Dense(128),
-        layers.Dense(64),
-        layers.Dense(32),
-        layers.Dense(16),
-        layers.Dense(8),
-        layers.Dense(1)
-    ])
-
-    model.compile(loss=tf.losses.MeanSquaredError(),
-                  optimizer=tf.optimizers.Adam(),
-                  metrics=METRICS)
-    return model
-
-
-def get_model_128_relu():
-    model = tf.keras.Sequential([
-        layers.Dense(22),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(32, activation='relu'),
-        layers.Dense(16, activation='relu'),
-        layers.Dense(8, activation='relu'),
-        layers.Dense(1)
-    ])
-
-    model.compile(loss=tf.losses.MeanSquaredError(),
-                  optimizer=tf.optimizers.Adam(),
-                  metrics=METRICS)
-    return model
-
-
-def get_model_16():
-    model = tf.keras.Sequential([
-        layers.Dense(22),
-        layers.Dense(16),
-        layers.Dense(8),
-        layers.Dense(1)
-    ])
-
-    model.compile(loss=tf.losses.MeanSquaredError(),
-                  optimizer=tf.optimizers.Adam(),
-                  metrics=METRICS)
-    return model
-
 
 def get_models_and_names():
     models = []
     model_names = []
 
-    model_names.append("model_16")
+    model_names.append("model_extraction_pyramide")
     model = tf.keras.Sequential([
         layers.Dense(22),
-        layers.Dense(16),
+        layers.Dense(64),
+        layers.Dense(128),
+        layers.Dense(32),
+        layers.Dense(128),
+        layers.Dense(32),
         layers.Dense(8),
-        layers.Dense(1, activation='sigmoid')
+        layers.Dense(1, activation='softmax')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
                   optimizer=tf.optimizers.Adam(),
@@ -73,12 +27,12 @@ def get_models_and_names():
     model_names.append("model_128")
     model = tf.keras.Sequential([
         layers.Dense(22),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(32, activation='relu'),
-        layers.Dense(16, activation='relu'),
-        layers.Dense(8, activation='relu'),
-        layers.Dense(1, activation='sigmoid')
+        layers.Dense(128),
+        layers.Dense(64),
+        layers.Dense(32),
+        layers.Dense(16),
+        layers.Dense(8),
+        layers.Dense(1, activation='softmax')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
                   optimizer=tf.optimizers.Adam(),
@@ -95,12 +49,13 @@ def get_models_and_names():
         layers.Dense(32, activation='relu'),
         layers.Dense(16, activation='relu'),
         layers.Dense(8, activation='relu'),
-        layers.Dense(1, activation='sigmoid')
+        layers.Dense(1, activation='softmax')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
                   optimizer=tf.optimizers.Adam(),
                   metrics=METRICS)
     models.append(model)
+
     return models, model_names
 
 

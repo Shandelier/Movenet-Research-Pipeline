@@ -1,5 +1,6 @@
 import tensorflow as tf
 import os
+import glob
 
 
 def choose_model(model_name="movenet_lightning"):
@@ -42,3 +43,12 @@ def get_csvs_paths(input):
     pose_type = [f.split("_", 1)[0] for f in file_names]
 
     return file_paths, file_names, pose_type
+
+
+def get_result_type(metric_str, rdir='results'):
+    path_pattern = os.path.join(rdir, metric_str+'*.csv')
+    file_paths = glob.glob(path_pattern)
+    file_names = [f.split("_", 1)[1] for f in file_paths]
+    file_names = [f.split(".", 1)[0] for f in file_names]
+
+    return file_paths, file_names

@@ -34,15 +34,19 @@ def train(csvs, output, results):
 
     models, model_names = tut.get_models_and_names()
 
-    for i, (model, model_name) in tqdm(enumerate(zip(models, model_names)),
-                                       desc="MODEL", ascii=True, total=len(models)):
+    for model, model_name in tqdm(zip(models, model_names),
+                                  desc="MODEL", ascii=True, total=len(models)):
         ds_features = ds.copy()
-        history = model.fit(ds_features, ds_labels, epochs=100)
+        history = model.fit(ds_features, ds_labels, epochs=500)
 
         accuracy = history.history['accuracy']
         precision = history.history['precision']
         recall = history.history['recall']
         loss = history.history['loss']
+        tp = history.history['tp']
+        fp = history.history['fp']
+        tn = history.history['tn']
+        fn = history.history['fn']
 
         np.savetxt("{}/accuracy_{}.csv".format(results,
                    model_name), accuracy, delimiter=",")
@@ -52,6 +56,14 @@ def train(csvs, output, results):
                    model_name), recall, delimiter=",")
         np.savetxt("{}/loss_{}.csv".format(results,
                    model_name), loss, delimiter=",")
+        np.savetxt("{}/TruePositives{}.csv".format(results,
+                   model_name), tp, delimiter=",")
+        np.savetxt("{}/FalsePositives{}.csv".format(results,
+                   model_name), fp, delimiter=",")
+        np.savetxt("{}/TrueNegatives{}.csv".format(results,
+                   model_name), tn, delimiter=",")
+        np.savetxt("{}/FalseNegatives{}.csv".format(results,
+                   model_name), fn, delimiter=",")
 
 
 def load_csvs(csvs):
