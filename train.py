@@ -1,56 +1,30 @@
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 from tensorflow.python.keras.backend import conv2d, dropout
 from tensorflow.python.keras.layers.core import Dropout
 
 from tensorflow.keras import layers
 from tensorflow.keras.layers.experimental import preprocessing
 
+import util as ut
+import training_util as tut
 
-def train(csvs, output):
+
+def train(csvs, output, results):
+    if (csvs == None):
+        csvs, _, _ = ut.get_csvs_paths(output)
+
     np.set_printoptions(precision=3, suppress=True)
     ds = load_csvs(csvs)
 
     sample_filepath = ds.pop('filepath')
     ds_labels = ds.pop('pose_type')
 
-    pred = [
-        'pred_nose',
-        'pred_left_eye',
-        'pred_right_eye',
-        'pred_left_ear',
-        'pred_right_ear',
-        'pred_left_shoulder',
-        'pred_right_shoulder',
-        'pred_left_elbow',
-        'pred_right_elbow',
-        'pred_left_wrist',
-        'pred_right_wrist',
-        'pred_left_hip',
-        'pred_right_hip',
-        'pred_left_knee',
-        'pred_right_knee',
-        'pred_left_ankle',
-        'pred_right_ankle']
-
-    excessive = [
-        'x_left_hip',
-        'x_right_hip',
-        'x_left_knee',
-        'x_right_knee',
-        'x_left_ankle',
-        'x_right_ankle',
-        'y_left_hip',
-        'y_right_hip',
-        'y_left_knee',
-        'y_right_knee',
-        'y_left_ankle',
-        'y_right_ankle']
-
-    for p in pred:
+    for p in tut.excessive_pred:
         ds.pop(p)
-    for e in excessive:
+    for e in tut.excessive:
         ds.pop(e)
 
     ds_features = ds.copy()
@@ -58,32 +32,26 @@ def train(csvs, output):
     print(ds_features)
     print(ds_labels)
 
-    norm_ssr_model = tf.keras.Sequential([
-        # normalize,
-        layers.Dense(22),
-        layers.Dense(128),
-        layers.Dense(64),
-        layers.Dense(32),
-        # layers.Dropout(.2),
-        layers.Dense(16),
-        layers.Dense(8),
-        # layers.Dropout(.2),
-        layers.Dense(1)
-    ])
+    models, model_names = tut.get_models_and_names()
 
-    norm_ssr_model.compile(loss=tf.losses.MeanSquaredError(),
-                           optimizer=tf.optimizers.Adam(),
-                           metrics='acc')
+    for i, (model, model_name) in tqdm(enumerate(zip(models, model_names)),
+                                       desc="MODEL", ascii=True, total=len(models)):
+        ds_features = ds.copy()
+        history = model.fit(ds_features, ds_labels, epochs=100)
 
-    history = norm_ssr_model.fit(ds_features, ds_labels, epochs=250)
+        accuracy = history.history['accuracy']
+        precision = history.history['precision']
+        recall = history.history['recall']
+        loss = history.history['loss']
 
-    acc = history.history['acc']
-    loss = history.history['loss']
-
-    print(acc)
-
-    np.savetxt(output+'/acc.csv', acc, delimiter=",")
-    np.savetxt(output+'/loss.csv', loss, delimiter=",")
+        np.savetxt("{}/accuracy_{}.csv".format(results,
+                   model_name), accuracy, delimiter=",")
+        np.savetxt("{}/precision_{}.csv".format(results,
+                   model_name), precision, delimiter=",")
+        np.savetxt("{}/recall_{}.csv".format(results,
+                   model_name), recall, delimiter=",")
+        np.savetxt("{}/loss_{}.csv".format(results,
+                   model_name), loss, delimiter=",")
 
 
 def load_csvs(csvs):
