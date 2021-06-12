@@ -1,4 +1,6 @@
 import tensorflow as tf
+# import tensorflow_addons as tfa
+# import tensorflow_model_analysis as tfma
 from tensorflow.keras import layers
 
 
@@ -6,7 +8,7 @@ def get_models_and_names():
     models = []
     model_names = []
 
-    model_names.append("model_extraction_pyramide")
+    model_names.append("model_throttle")
     model = tf.keras.Sequential([
         layers.Dense(22),
         layers.Dense(64),
@@ -15,7 +17,7 @@ def get_models_and_names():
         layers.Dense(128),
         layers.Dense(32),
         layers.Dense(8),
-        layers.Dense(1, activation='softmax')
+        layers.Dense(1, activation='sigmoid')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
                   optimizer=tf.optimizers.Adam(),
@@ -24,7 +26,7 @@ def get_models_and_names():
         model
     )
 
-    model_names.append("model_128")
+    model_names.append("model_1_layer_128")
     model = tf.keras.Sequential([
         layers.Dense(22),
         layers.Dense(128),
@@ -32,7 +34,7 @@ def get_models_and_names():
         layers.Dense(32),
         layers.Dense(16),
         layers.Dense(8),
-        layers.Dense(1, activation='softmax')
+        layers.Dense(1, activation='sigmoid')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
                   optimizer=tf.optimizers.Adam(),
@@ -49,7 +51,7 @@ def get_models_and_names():
         layers.Dense(32, activation='relu'),
         layers.Dense(16, activation='relu'),
         layers.Dense(8, activation='relu'),
-        layers.Dense(1, activation='softmax')
+        layers.Dense(1, activation='sigmoid')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
                   optimizer=tf.optimizers.Adam(),
@@ -62,6 +64,8 @@ def get_models_and_names():
 METRICS = [tf.keras.metrics.Precision(name='precision'),
            tf.keras.metrics.Recall(name='recall'),
            tf.keras.metrics.Accuracy(name='accuracy'),
+           # tfa.metrics.GeometricMean(name='gmean'),
+           # tfma.metrics.F1Score
            tf.keras.metrics.TruePositives(name='tp'),
            tf.keras.metrics.FalsePositives(name='fp'),
            tf.keras.metrics.TrueNegatives(name='tn'),

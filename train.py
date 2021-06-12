@@ -1,13 +1,6 @@
 import pandas as pd
 import numpy as np
-import tensorflow as tf
 from tqdm import tqdm
-from tensorflow.python.keras.backend import conv2d, dropout
-from tensorflow.python.keras.layers.core import Dropout
-
-from tensorflow.keras import layers
-from tensorflow.keras.layers.experimental import preprocessing
-
 import util as ut
 import training_util as tut
 
@@ -37,7 +30,7 @@ def train(csvs, output, results):
     for model, model_name in tqdm(zip(models, model_names),
                                   desc="MODEL", ascii=True, total=len(models)):
         ds_features = ds.copy()
-        history = model.fit(ds_features, ds_labels, epochs=500)
+        history = model.fit(ds_features, ds_labels, epochs=10)
 
         accuracy = history.history['accuracy']
         precision = history.history['precision']
@@ -71,5 +64,5 @@ def load_csvs(csvs):
     ds = pd.read_csv(init)
     for i, csv in enumerate(csvs):
         read = pd.read_csv(csv)
-        ds = pd.concat([ds, read])
+        ds = pd.concat([ds, read], axis=0)
     return ds

@@ -1,12 +1,14 @@
-
+python=3.8.10
+# pip install tensorflow-model-analysis
 imageio
-tensorflow=2.4.1
 tqdm
 matplotlib
 IPython
 pandas
 # install with pip
 # git+https://github.com/tensorflow/docs
+
 # install from conda-forge "conda install -c conda-forge ...'
-# opencv-python
-# tensorflow-hub=0.12
+# opencv
+# tensorflow-hub
+# matplotlib

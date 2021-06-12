@@ -4,7 +4,6 @@ import os
 import movenet as mn
 import vid2pic as v2p
 import train as t
-import util as ut
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default='./video')
