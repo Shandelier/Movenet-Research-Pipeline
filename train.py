@@ -35,6 +35,7 @@ def train(csvs, output, results):
         accuracy = history.history['accuracy']
         precision = history.history['precision']
         recall = history.history['recall']
+        fscore = history.history['fscore']
         loss = history.history['loss']
         tp = history.history['tp']
         fp = history.history['fp']
@@ -47,15 +48,17 @@ def train(csvs, output, results):
                    model_name), precision, delimiter=",")
         np.savetxt("{}/recall_{}.csv".format(results,
                    model_name), recall, delimiter=",")
+        np.savetxt("{}/fscore_{}.csv".format(results,
+                   model_name), fscore, delimiter=",")
         np.savetxt("{}/loss_{}.csv".format(results,
                    model_name), loss, delimiter=",")
-        np.savetxt("{}/TruePositives{}.csv".format(results,
+        np.savetxt("{}/TruePositives_{}.csv".format(results,
                    model_name), tp, delimiter=",")
-        np.savetxt("{}/FalsePositives{}.csv".format(results,
+        np.savetxt("{}/FalsePositives_{}.csv".format(results,
                    model_name), fp, delimiter=",")
-        np.savetxt("{}/TrueNegatives{}.csv".format(results,
+        np.savetxt("{}/TrueNegatives_{}.csv".format(results,
                    model_name), tn, delimiter=",")
-        np.savetxt("{}/FalseNegatives{}.csv".format(results,
+        np.savetxt("{}/FalseNegatives_{}.csv".format(results,
                    model_name), fn, delimiter=",")
 
 

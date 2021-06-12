@@ -65,7 +65,7 @@ METRICS = [tf.keras.metrics.Precision(name='precision'),
            tf.keras.metrics.Recall(name='recall'),
            tf.keras.metrics.Accuracy(name='accuracy'),
            # tfa.metrics.GeometricMean(name='gmean'),
-           # tfma.metrics.F1Score
+           # tfma.metrics.F1Score(name='fscore')
            tf.keras.metrics.TruePositives(name='tp'),
            tf.keras.metrics.FalsePositives(name='fp'),
            tf.keras.metrics.TrueNegatives(name='tn'),
