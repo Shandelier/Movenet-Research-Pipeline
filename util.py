@@ -27,13 +27,16 @@ def get_filenames(n_images, input):
     return filenames
 
 
-def get_vid_paths_and_names(inputs):
-    for input in inputs:
-        print(input)
+def get_vid_paths_and_names(input):
+
+    dir_paths = [f.path for f in os.scandir(input) if f.is_dir()]
+    for dp in dir_paths:
         file_paths = [
-            f.path for f in os.scandir(input) if f.is_file() and f.path.endswith(('.MOV', '.mp4'))]
+            f.path for f in os.scandir(dp) if f.is_file() and f.path.endswith(('.MOV', '.mp4'))]
         file_names = [os.path.basename(f).split(".", 1)[0] for f in file_paths]
         pose_type = [f.split("_", 1)[0] for f in file_names]
+        if (dir_paths == None):
+            raise NameError('Wrong File Path')
 
     return file_paths, file_names, pose_type
 
