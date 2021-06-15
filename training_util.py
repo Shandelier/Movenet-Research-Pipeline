@@ -58,14 +58,16 @@ def get_models_and_names():
                   metrics=METRICS)
     models.append(model)
 
+    # TODO: Droput monte carlo (tutorial robienia własnej warstywy)
+    # y_samples = np.stack([model(test_rescale,training=True) for sample in range(100)])
+
     return models, model_names
 
 
 METRICS = [tf.keras.metrics.Precision(name='precision'),
            tf.keras.metrics.Recall(name='recall'),
            tf.keras.metrics.Accuracy(name='accuracy'),
-           # tfa.metrics.GeometricMean(name='gmean'),
-           # tfma.metrics.F1Score(name='fscore')
+           #    tfa.metrics.GeometricMean(name='gmean'),
            tf.keras.metrics.TruePositives(name='tp'),
            tf.keras.metrics.FalsePositives(name='fp'),
            tf.keras.metrics.TrueNegatives(name='tn'),
