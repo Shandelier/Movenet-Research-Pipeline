@@ -6,7 +6,7 @@ import training_util as tut
 import tensorflow as tf
 
 
-def train(csvs, output, results):
+def train(csvs, output, results, epochs):
     if (csvs == None):
         csvs, _, _ = ut.get_csvs_paths(output)
 
@@ -21,8 +21,8 @@ def train(csvs, output, results):
         print("MODEL: ", model_name)
 
         history_logger, validation_logger = loggers(results, model_name)
-        model.fit(X_train, y_train, epochs=10,
-                  validation_data=(X_test, y_test), callbacks=[history_logger], verbose=0)
+        model.fit(X_train, y_train, epochs=epochs,
+                  validation_data=(X_test, y_test), callbacks=[history_logger], verbose=1)
         model.evaluate(
             X_val, y_val, callbacks=[validation_logger], return_dict=True, verbose=0)
 

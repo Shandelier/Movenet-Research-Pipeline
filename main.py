@@ -17,6 +17,7 @@ parser.add_argument('--model', type=str, default='li')
 parser.add_argument('--skip-vid2pic', type=int, default=1)
 parser.add_argument('--skip-movenet', type=int, default=1)
 parser.add_argument('--skip-learning', type=int, default=0)
+parser.add_argument('--epochs', type=int, default=10)
 
 args = parser.parse_args()
 
@@ -43,7 +44,7 @@ def main():
     if not os.path.exists(args.results):
         os.makedirs(args.results)
 
-    t.train(csvs, args.csv, args.results)
+    t.train(csvs, args.csv, args.results, args.epochs)
     print("STOP")
 
 
