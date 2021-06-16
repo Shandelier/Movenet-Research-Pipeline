@@ -14,8 +14,8 @@ parser.add_argument('--results', type=str, default='./results')
 parser.add_argument('--model', type=str, default='li')
 # parser.add_argument('--n_images', type=int, default=0)
 # parser.add_argument("--pose", type=int, default=0)  # 0-straight, 1-slouche
-parser.add_argument('--skip-vid2pic', type=int, default=0)
-parser.add_argument('--skip-movenet', type=int, default=0)
+parser.add_argument('--skip-vid2pic', type=int, default=1)
+parser.add_argument('--skip-movenet', type=int, default=1)
 parser.add_argument('--skip-learning', type=int, default=0)
 
 args = parser.parse_args()

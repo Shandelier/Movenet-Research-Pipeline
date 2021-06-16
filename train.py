@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import util as ut
 import training_util as tut
+import tensorflow as tf
 
 
 def train(csvs, output, results):
@@ -10,7 +11,28 @@ def train(csvs, output, results):
         csvs, _, _ = ut.get_csvs_paths(output)
 
     np.set_printoptions(precision=3, suppress=True)
-    ds = load_csvs(csvs)
+
+    X_train, y_train, X_test, y_test, X_val, y_val = load_csvs(csvs)
+
+    models, model_names = tut.get_models_and_names()
+
+    for model, model_name in tqdm(zip(models, model_names),
+                                  desc="MODEL", ascii=True, total=len(models)):
+        print("MODEL: ", model_name)
+
+        history_logger, validation_logger = loggers(results, model_name)
+        model.fit(X_train, y_train, epochs=10,
+                  validation_data=(X_test, y_test), callbacks=[history_logger], verbose=0)
+        model.evaluate(
+            X_val, y_val, callbacks=[validation_logger], return_dict=True, verbose=0)
+
+
+def load_csvs(csvs):
+    init = list.pop(csvs)
+    ds = pd.read_csv(init)
+    for i, csv in enumerate(csvs):
+        read = pd.read_csv(csv)
+        ds = pd.concat([ds, read], axis=0)
 
     sample_filepath = ds.pop('filepath')
     ds_labels = ds.pop('pose_type')
@@ -20,55 +42,25 @@ def train(csvs, output, results):
     for e in tut.excessive:
         ds.pop(e)
 
-    ds_features = ds.copy()
+    ds = ds.astype(dtype=np.float32)
+    ds_labels = ds_labels.astype(dtype=np.float32)
 
-    print(ds_features)
-    print(ds_labels)
-
-    models, model_names = tut.get_models_and_names()
-
-    for model, model_name in tqdm(zip(models, model_names),
-                                  desc="MODEL", ascii=True, total=len(models)):
-        ds_features = ds.copy()
-        history = model.fit(ds_features, ds_labels, epochs=10)
-
-        accuracy = history.history['accuracy']
-        precision = history.history['precision']
-        recall = history.history['recall']
-        # fscore = history.history['fscore']
-        # gmean = history.history['gmean']
-        loss = history.history['loss']
-        tp = history.history['tp']
-        fp = history.history['fp']
-        tn = history.history['tn']
-        fn = history.history['fn']
-
-        np.savetxt("{}/accuracy_{}.csv".format(results,
-                   model_name), accuracy, delimiter=",")
-        np.savetxt("{}/precision_{}.csv".format(results,
-                   model_name), precision, delimiter=",")
-        np.savetxt("{}/recall_{}.csv".format(results,
-                   model_name), recall, delimiter=",")
-        # np.savetxt("{}/gmean_{}.csv".format(results,
-        #            model_name), gmean, delimiter=",")
-        # np.savetxt("{}/fscore_{}.csv".format(results,
-        #            model_name), fscore, delimiter=",")
-        np.savetxt("{}/loss_{}.csv".format(results,
-                   model_name), loss, delimiter=",")
-        np.savetxt("{}/TruePositives_{}.csv".format(results,
-                   model_name), tp, delimiter=",")
-        np.savetxt("{}/FalsePositives_{}.csv".format(results,
-                   model_name), fp, delimiter=",")
-        np.savetxt("{}/TrueNegatives_{}.csv".format(results,
-                   model_name), tn, delimiter=",")
-        np.savetxt("{}/FalseNegatives_{}.csv".format(results,
-                   model_name), fn, delimiter=",")
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(
+        ds, ds_labels, test_size=0.4, random_state=420)
+    X_test, X_val, y_test, y_val = train_test_split(
+        X_test, y_test, test_size=0.5, random_state=420)
+    return X_train, y_train, X_test, y_test, X_val, y_val
 
 
-def load_csvs(csvs):
-    init = list.pop(csvs)
-    ds = pd.read_csv(init)
-    for i, csv in enumerate(csvs):
-        read = pd.read_csv(csv)
-        ds = pd.concat([ds, read], axis=0)
-    return ds
+def loggers(results, model_name):
+    history_logger = tf.keras.callbacks.CSVLogger(
+        "{}/history_{}.csv".format(results, model_name), separator=",", append=True)
+
+    validation_logger = tf.keras.callbacks.CSVLogger(
+        "{}/validation_{}.csv".format(results, model_name), separator=",", append=True)
+    validation_logger.on_test_begin = validation_logger.on_train_begin
+    validation_logger.on_test_batch_end = validation_logger.on_epoch_end
+    validation_logger.on_test_end = validation_logger.on_train_end
+
+    return history_logger, validation_logger

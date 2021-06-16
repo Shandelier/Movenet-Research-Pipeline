@@ -3,7 +3,9 @@ __pycache__/
 .vscode/
 
 test.py
+brudnopis.py
 
 input/*
 output/*
 results/*
+video/*
