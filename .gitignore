@@ -8,4 +8,8 @@ brudnopis.py
 input/*
 output/*
 results/*
+results2
+final_results/*
 video/*
+additional_metrics.py
+brudnopis.py

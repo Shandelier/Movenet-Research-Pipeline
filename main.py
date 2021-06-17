@@ -11,6 +11,7 @@ parser.add_argument('--pic', type=str, default='./input')
 # parser.add_argument('--input', type=str, default='./input')
 parser.add_argument('--csv', type=str, default='./output')
 parser.add_argument('--results', type=str, default='./results')
+parser.add_argument('--final-results', type=str, default='./final_results')
 parser.add_argument('--model', type=str, default='li')
 # parser.add_argument('--n_images', type=int, default=0)
 # parser.add_argument("--pose", type=int, default=0)  # 0-straight, 1-slouche
@@ -18,7 +19,6 @@ parser.add_argument('--skip-vid2pic', type=int, default=1)
 parser.add_argument('--skip-movenet', type=int, default=1)
 parser.add_argument('--skip-learning', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=10)
-
 args = parser.parse_args()
 
 
@@ -43,8 +43,11 @@ def main():
 
     if not os.path.exists(args.results):
         os.makedirs(args.results)
+    if not os.path.exists(args.csv):
+        os.makedirs(args.csv)
 
-    t.train(csvs, args.csv, args.results, args.epochs)
+    t.train(csvs, args.csv, args.results, args.final_results, args.epochs)
+
     print("STOP")
 
 

@@ -4,9 +4,10 @@ from tqdm import tqdm
 import util as ut
 import training_util as tut
 import tensorflow as tf
+import os
 
 
-def train(csvs, output, results, epochs):
+def train(csvs, output, results, final_results, epochs):
     if (csvs == None):
         csvs, _, _ = ut.get_csvs_paths(output)
 
@@ -25,6 +26,9 @@ def train(csvs, output, results, epochs):
                   validation_data=(X_test, y_test), callbacks=[history_logger], verbose=1)
         model.evaluate(
             X_val, y_val, callbacks=[validation_logger], return_dict=True, verbose=0)
+
+    # Save additional metrics
+    additional_metrics(results, final_results)
 
 
 def load_csvs(csvs):
@@ -64,3 +68,20 @@ def loggers(results, model_name):
     validation_logger.on_test_end = validation_logger.on_train_end
 
     return history_logger, validation_logger
+
+
+def additional_metrics(results, final_results):
+    csv_list, csv_names, _ = ut.get_csvs_paths(r"./results")
+    for i, (csv, name) in tqdm(enumerate(zip(csv_list, csv_names)), desc="File", ascii=True, total=len(csv_list)):
+        metrics = pd.read_csv(csv)
+        history = metrics.copy()
+        tp = history.pop("tp")
+        tn = history.pop("tn")
+        fp = history.pop("fp")
+        fn = history.pop("fn")
+        precision = history.pop("precision")
+        recall = history.pop("recall")
+        # TODO: gmean and BAC
+        fscore = 2 * (precision * recall) / (precision + recall)
+        metrics['fscore'] = fscore
+        metrics.to_csv(os.path.join("full_results", name+".csv"))
