@@ -55,7 +55,7 @@ def main():
     if not os.path.exists(args.results_final):
         os.makedirs(args.results_final)
     if not os.path.exists(args.results_graphs):
-        os.makedirs(args.csv)
+        os.makedirs(args.results_graphs)
 
     t.train(csvs, args.csv, args.results, args.results_final, args.epochs)
 
