@@ -5,6 +5,7 @@ import util as ut
 import training_util as tut
 import tensorflow as tf
 import os
+import json
 
 
 def train(csvs, output, results, final_results, epochs):
@@ -13,41 +14,65 @@ def train(csvs, output, results, final_results, epochs):
 
     np.set_printoptions(precision=3, suppress=True)
 
-    X_train, y_train, X_test, y_test, X_val, y_val = load_csvs(csvs)
+    # result cube dimensions
+    c_models = 3
+    c_metrics = len(tut.skl_metrics)
+    folds = 2
+    repeats = 5
+    rescube = np.zeros((folds*repeats, c_models, c_metrics))
 
-    models, model_names = tut.get_models_and_names()
+    X, y, split = load_split(csvs, folds, repeats)
+    for split_n, (train_index, test_index) in tqdm(enumerate(split.split(X, y)), desc="CrossVal", ascii=True, total=folds*repeats):
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
-    for model, model_name in tqdm(zip(models, model_names),
-                                  desc="MODEL", ascii=True, total=len(models)):
-        print("MODEL: ", model_name)
+        train = tf.data.Dataset.from_tensor_slices(
+            (X_train.values, y_train.values)).batch(128)
+        test = tf.data.Dataset.from_tensor_slices(
+            (X_test.values, y_test.values)).batch(128)
 
-        history_logger, validation_logger = loggers(results, model_name)
-        model.fit(X_train, y_train, epochs=epochs,
-                  validation_data=(X_test, y_test), callbacks=[history_logger], verbose=1)
-        model.evaluate(
-            X_val, y_val, callbacks=[validation_logger], return_dict=True, verbose=0)
+        y_test = y_test.to_numpy()
 
-    # Save additional metrics
+        models, model_names = tut.get_models_and_names()
+
+        for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=3, leave=False):
+
+            history_logger, validation_logger = loggers(results, model_name)
+            model.fit(train, epochs=epochs, callbacks=[
+                history_logger], verbose=0)
+            # model.evaluate(
+            #     test, callbacks=[validation_logger], return_dict=True, verbose=0)
+            pred = np.array(model.predict(test)).ravel()
+            pred[:] = pred[:] >= 0.5
+
+            model_scores = []
+            for m in tut.skl_metrics:
+                if m == 'gmean' or m == 'fscore':
+                    model_scores.append(tut.skl_metrics[m](
+                        pred, y_test, average='macro'))
+                    continue
+                model_scores.append(tut.skl_metrics[m](pred, y_test))
+            try:
+                rescube[split_n, model_n, :] = model_scores
+            except:
+                rescube[split_n, model_n, :] = np.nan
+                print("WARNING: rescube subtable error")
     additional_metrics(results, final_results)
+    np.save(os.path.join(results, "rescube"), rescube)
+    with open(os.path.join(results, "legend.json"), "w") as outfile:
+        json.dump(
+            {
+                "models": list(model_names),
+                "metrics": list(tut.skl_metrics.keys()),
+                "folds": folds,
+            },
+            outfile,
+            indent="\t",
+        )
 
 
-def load_csvs(csvs):
-    init = list.pop(csvs)
-    ds = pd.read_csv(init)
-    for i, csv in enumerate(csvs):
-        read = pd.read_csv(csv)
-        ds = pd.concat([ds, read], axis=0)
-
-    sample_filepath = ds.pop('filepath')
-    ds_labels = ds.pop('pose_type')
-
-    for p in tut.excessive_pred:
-        ds.pop(p)
-    for e in tut.excessive:
-        ds.pop(e)
-
-    ds = ds.astype(dtype=np.float32)
-    ds_labels = ds_labels.astype(dtype=np.float32)
+def load_train_test(csvs):
+    ds, ds_labels = read_csvs(csvs)
 
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(
@@ -57,12 +82,20 @@ def load_csvs(csvs):
     return X_train, y_train, X_test, y_test, X_val, y_val
 
 
+def load_split(csvs, folds, repeats):
+    ds, ds_labels = read_csvs(csvs)
+    from sklearn.model_selection import RepeatedStratifiedKFold
+    split = RepeatedStratifiedKFold(
+        n_splits=folds, n_repeats=repeats, random_state=420)
+    return ds, ds_labels, split
+
+
 def loggers(results, model_name):
     history_logger = tf.keras.callbacks.CSVLogger(
         "{}/history_{}.csv".format(results, model_name), separator=",", append=True)
 
     validation_logger = tf.keras.callbacks.CSVLogger(
-        "{}/validation_{}.csv".format(results, model_name), separator=",", append=True)
+        "{}/test_{}.csv".format(results, model_name), separator=",", append=True)
     validation_logger.on_test_begin = validation_logger.on_train_begin
     validation_logger.on_test_batch_end = validation_logger.on_epoch_end
     validation_logger.on_test_end = validation_logger.on_train_end
@@ -71,17 +104,48 @@ def loggers(results, model_name):
 
 
 def additional_metrics(results, final_results):
-    csv_list, csv_names, _ = ut.get_csvs_paths(r"./results")
+    csv_list, csv_names, _ = ut.get_csvs_paths(results)
     for i, (csv, name) in tqdm(enumerate(zip(csv_list, csv_names)), desc="File", ascii=True, total=len(csv_list)):
         metrics = pd.read_csv(csv)
         history = metrics.copy()
-        tp = history.pop("tp")
-        tn = history.pop("tn")
-        fp = history.pop("fp")
-        fn = history.pop("fn")
+        # tp = history.pop("tp")
+        # tn = history.pop("tn")
+        # fp = history.pop("fp")
+        # fn = history.pop("fn")
         precision = history.pop("precision")
         recall = history.pop("recall")
         # TODO: gmean and BAC
         fscore = 2 * (precision * recall) / (precision + recall)
         metrics['fscore'] = fscore
-        metrics.to_csv(os.path.join("full_results", name+".csv"))
+        metrics.to_csv(os.path.join(final_results, name+".csv"))
+
+
+def read_csvs(csvs):
+    init = list.pop(csvs)
+    ds = pd.read_csv(init)
+    for i, csv in enumerate(csvs):
+        read = pd.read_csv(csv)
+        ds = pd.concat([ds, read], axis=0)
+
+    ds.reset_index(drop=True)
+    print(ds)
+    from sklearn.utils import shuffle
+    ds = shuffle(ds, random_state=420)
+    print(ds)
+
+    count = ds['pose_type'].value_counts()
+
+    sample_filepath = ds.pop('filepath')
+    ds_labels = ds.pop('pose_type')
+
+    for p in tut.excessive_pred:
+        ds.pop(p)
+    for e in tut.excessive:
+        ds.pop(e)
+
+    print("Samples and features: {}".format(ds.shape))
+    print("Class 0 = {}, Class 1 = {}".format(count[0], count[1]))
+
+    ds = ds.astype(dtype=np.float32)
+    ds_labels = ds_labels.astype(dtype=np.float32)
+    return ds, ds_labels

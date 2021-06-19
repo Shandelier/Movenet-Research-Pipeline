@@ -70,16 +70,30 @@
 # print(fn)
 # print(recall)
 
+from packaging import version
 
-import os
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('--video', type=str, default='./video')
-args = parser.parse_args()
+import pandas as pd
+from matplotlib import pyplot as plt
+import seaborn as sns
+from scipy import stats
+import tensorboard as tb
 
-vids = args.video
-print(vids)
+major_ver, minor_ver, _ = version.parse(tb.__version__).release
+assert major_ver >= 2 and minor_ver >= 3, \
+    "This notebook requires TensorBoard 2.3 or later."
+print("TensorBoard version: ", tb.__version__)
 
-file_paths = [f.path for f in os.scandir(
-    input) if f.is_file() and f.path.endswith('.csv')]
-print(file_paths)
+experiment_id = "c1KCv3X3QvGwaXfgX1c4tg"
+experiment = tb.data.experimental.ExperimentFromDev(experiment_id)
+df = experiment.get_scalars()
+print(df)
+print(df["run"].unique())
+print(df["tag"].unique())
+
+plt.figure(figsize=(16, 6))
+plt.subplot(1, 2, 1)
+sns.lineplot(data=dfw_validation, x="step", y="epoch_accuracy",
+             hue=optimizer_validation).set_title("accuracy")
+plt.subplot(1, 2, 2)
+sns.lineplot(data=dfw_validation, x="step", y="epoch_loss",
+             hue=optimizer_validation).set_title("loss")

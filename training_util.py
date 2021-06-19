@@ -2,6 +2,8 @@ import tensorflow as tf
 # import tensorflow_addons as tfa
 # import tensorflow_model_analysis as tfma
 from tensorflow.keras import layers
+from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, f1_score, precision_score, recall_score
+from imblearn.metrics import geometric_mean_score
 
 
 def get_models_and_names():
@@ -13,7 +15,7 @@ def get_models_and_names():
         layers.Dense(22),
         layers.Dense(64),
         layers.Dense(128),
-        layers.Dense(32),
+        layers.Dense(8),
         layers.Dense(128),
         layers.Dense(32),
         layers.Dense(8),
@@ -30,10 +32,6 @@ def get_models_and_names():
     model = tf.keras.Sequential([
         layers.Dense(22),
         layers.Dense(128),
-        layers.Dense(64),
-        layers.Dense(32),
-        layers.Dense(16),
-        layers.Dense(8),
         layers.Dense(1, activation='sigmoid')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
@@ -66,12 +64,20 @@ def get_models_and_names():
 
 METRICS = [tf.keras.metrics.Precision(name='precision'),
            tf.keras.metrics.Recall(name='recall'),
-           tf.keras.metrics.Accuracy(name='accuracy'),
-           #    tfa.metrics.GeometricMean(name='gmean'),
+           tf.keras.metrics.BinaryAccuracy(name='accuracy'),
            tf.keras.metrics.TruePositives(name='tp'),
            tf.keras.metrics.FalsePositives(name='fp'),
            tf.keras.metrics.TrueNegatives(name='tn'),
            tf.keras.metrics.FalseNegatives(name='fn'), ]
+
+skl_metrics = {
+    "kappa": cohen_kappa_score,
+    "bac": balanced_accuracy_score,
+    "fscore": f1_score,
+    "gmean": geometric_mean_score,
+    "precision": precision_score,
+    "recall": recall_score,
+}
 
 
 excessive_pred = [

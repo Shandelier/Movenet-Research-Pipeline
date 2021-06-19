@@ -1,6 +1,7 @@
 import tensorflow as tf
 import os
 import glob
+import json
 
 
 def choose_model(model_name="movenet_lightning"):
@@ -52,3 +53,8 @@ def get_result_type(metric_str, rdir='results'):
     file_names = [f.split(".", 1)[0] for f in file_names]
 
     return file_paths, file_names
+
+
+def json2object(path):
+    with open(path) as json_data:
+        return json.load(json_data)
