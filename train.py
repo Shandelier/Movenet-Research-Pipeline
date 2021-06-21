@@ -6,6 +6,7 @@ import training_util as tut
 import tensorflow as tf
 import os
 import json
+from sklearn.model_selection import train_test_split
 
 
 def train(csvs, output, results, final_results, epochs):
@@ -26,8 +27,13 @@ def train(csvs, output, results, final_results, epochs):
         X_train, X_test = X.iloc[train_index], X.iloc[test_index]
         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
+        X_test, X_val, y_test, y_val = train_test_split(
+            X_test, y_test, test_size=0.2, random_state=420)
+
         train = tf.data.Dataset.from_tensor_slices(
             (X_train.values, y_train.values)).batch(128)
+        validate = tf.data.Dataset.from_tensor_slices(
+            (X_val.values, y_val.values)).batch(128)
         test = tf.data.Dataset.from_tensor_slices(
             (X_test.values, y_test.values)).batch(128)
 
@@ -38,10 +44,14 @@ def train(csvs, output, results, final_results, epochs):
         for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=3, leave=False):
 
             history_logger, validation_logger = loggers(results, model_name)
-            model.fit(train, epochs=epochs, callbacks=[
-                history_logger], verbose=0)
+            # model.fit(train, epochs=epochs, callbacks=[
+            #     history_logger], verbose=0)
             # model.evaluate(
-            #     test, callbacks=[validation_logger], return_dict=True, verbose=0)
+            #     validate, callbacks=[validation_logger], return_dict=True, verbose=0)
+            model.fit(train, epochs=epochs, callbacks=[
+                history_logger], validation_data=validate, verbose=0)
+            # model.evaluate(
+            #     validate, callbacks=[validation_logger], return_dict=True, verbose=0)
             pred = np.array(model.predict(test)).ravel()
             pred[:] = pred[:] >= 0.5
 
@@ -69,6 +79,7 @@ def train(csvs, output, results, final_results, epochs):
             outfile,
             indent="\t",
         )
+    return folds*repeats
 
 
 def load_train_test(csvs):
@@ -78,7 +89,7 @@ def load_train_test(csvs):
     X_train, X_test, y_train, y_test = train_test_split(
         ds, ds_labels, test_size=0.4, random_state=420)
     X_test, X_val, y_test, y_val = train_test_split(
-        X_test, y_test, test_size=0.5, random_state=420)
+        X_test, y_test, test_size=0.2, random_state=420)
     return X_train, y_train, X_test, y_test, X_val, y_val
 
 
@@ -92,10 +103,10 @@ def load_split(csvs, folds, repeats):
 
 def loggers(results, model_name):
     history_logger = tf.keras.callbacks.CSVLogger(
-        "{}/history_{}.csv".format(results, model_name), separator=",", append=True)
+        "{}/training_{}.csv".format(results, model_name), separator=",", append=True)
 
     validation_logger = tf.keras.callbacks.CSVLogger(
-        "{}/test_{}.csv".format(results, model_name), separator=",", append=True)
+        "{}/validation_{}.csv".format(results, model_name), separator=",", append=True)
     validation_logger.on_test_begin = validation_logger.on_train_begin
     validation_logger.on_test_batch_end = validation_logger.on_epoch_end
     validation_logger.on_test_end = validation_logger.on_train_end
@@ -108,15 +119,16 @@ def additional_metrics(results, final_results):
     for i, (csv, name) in tqdm(enumerate(zip(csv_list, csv_names)), desc="File", ascii=True, total=len(csv_list)):
         metrics = pd.read_csv(csv)
         history = metrics.copy()
-        # tp = history.pop("tp")
-        # tn = history.pop("tn")
-        # fp = history.pop("fp")
-        # fn = history.pop("fn")
         precision = history.pop("precision")
         recall = history.pop("recall")
-        # TODO: gmean and BAC
+        val_precision = history.pop("val_precision")
+        val_recall = history.pop("val_recall")
+
         fscore = 2 * (precision * recall) / (precision + recall)
+        val_fscore = 2 * (val_precision * val_recall) / \
+            (val_precision + val_recall)
         metrics['fscore'] = fscore
+        metrics['val_fscore'] = val_fscore
         metrics.to_csv(os.path.join(final_results, name+".csv"))
 
 
@@ -128,10 +140,8 @@ def read_csvs(csvs):
         ds = pd.concat([ds, read], axis=0)
 
     ds.reset_index(drop=True)
-    print(ds)
     from sklearn.utils import shuffle
     ds = shuffle(ds, random_state=420)
-    print(ds)
 
     count = ds['pose_type'].value_counts()
 

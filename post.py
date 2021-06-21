@@ -29,8 +29,6 @@ def post():
         # Subtable is 2d (clf, fold)
         # rescube : fold, model, metric
         subtable = rescube[:, :, mid].T
-        print("subtable: ", subtable)
-
         # Check if metric was valid
         if np.isnan(subtable).any():
             print("Unvaild")
@@ -45,28 +43,14 @@ def post():
 
         for i in range(len(models)):
             for j in range(len(models)):
-                si = subtable[i]
-                sj = subtable[j]
                 t_statistic[i, j], p_value[i, j] = used_test(
-                    subtable[i], subtable[j])
-
-        print(t_statistic)
-        print("p value:")
-        print(p_value)
-
-        advantage = np.zeros((len(models), len(models)))
-        advantage[t_statistic > 0] = 1
+                    subtable[i, :], subtable[j, :], nan_policy='raise')
 
         significance = np.zeros((len(models), len(models)))
         significance[p_value <= alpha] = 1
 
-        stat_better = significance * advantage
-
-        print(stat_better)
-        print(scores)
-        print(stds)
         table_file.write(lt.row(metric, scores, stds))
-        table_file.write(lt.row_stats(metric, stat_better, scores, stds))
+        table_file.write(lt.row_stats(metric, significance, scores, stds))
 
     table_file.write(lt.footer("Results for %s metric" % metric))
     table_file.close()

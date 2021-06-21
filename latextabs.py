@@ -47,10 +47,12 @@ def row_stats(dataset, dependency, scores, stds):
     min_score = np.min(scores)
     for i in range(scores.shape[0]):
         text += "& "
-        a = np.where(dependency[i] == 0)[0]
+        a = np.where(dependency[i] == 1)[0]
         # a = np.where(np.logical_and(dependency[i] == 0, scores[i]>min_score))[0]
 
         for value in a:
+            sth1 = scores[i]
+            sth2 = scores[value]
             if scores[i] < scores[value]:
                 a = a[a != value]
 

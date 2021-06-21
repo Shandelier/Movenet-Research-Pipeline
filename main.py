@@ -57,9 +57,10 @@ def main():
     if not os.path.exists(args.results_graphs):
         os.makedirs(args.results_graphs)
 
-    t.train(csvs, args.csv, args.results, args.results_final, args.epochs)
+    splits = t.train(csvs, args.csv, args.results,
+                     args.results_final, args.epochs)
 
-    dis.disp(args.results_final, args.results_graphs)
+    dis.disp(args.results_final, args.results_graphs, splits, args.epochs)
 
     post.post()
 
