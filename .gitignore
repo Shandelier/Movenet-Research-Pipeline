@@ -3,6 +3,17 @@ __pycache__/
 .vscode/
 
 test.py
+brudnopis.py
 
 input/*
 output/*
+results/*
+results2
+results_final/*
+results_graphs/*
+video/*
+additional_metrics.py
+brudnopis.py
+5-people-csvs/
+
+workspace.code-workspace

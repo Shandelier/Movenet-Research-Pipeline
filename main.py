@@ -1,83 +1,82 @@
-import tensorflow as tf
-import numpy as np
-import time
 import argparse
 import os
-from tqdm import tqdm
+import glob
 
-# Import matplotlib libraries
-from datetime import datetime
-
-import util as ut
-import save_utils as su
-import cropping as cr
-
+import movenet as mn
+import vid2pic as v2p
+import train as t
+import display_results as dis
+import post
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--video', type=str, default=r'./video')
+parser.add_argument('--pic', type=str, default=r'./input')
+# parser.add_argument('--input', type=str, default='./input')
+parser.add_argument('--csv', type=str, default=r'./output')
+parser.add_argument('--results', type=str, default=r'./results')
+parser.add_argument('--results-final', type=str, default=r'./results_final')
+parser.add_argument('--results-graphs', type=str, default=r'./results_graphs')
 parser.add_argument('--model', type=str, default='li')
-parser.add_argument('--input', type=str, default='./input')
-parser.add_argument('--output', type=str, default='./output')
-parser.add_argument('--n_images', type=int, default=0)
-parser.add_argument("--pose", type=int, default=0)  # 0-straight, 1-slouche
+# 0 - no, 1 - results, 2 - all dirs
+parser.add_argument('--clear_dir', type=int, default=1)
+# parser.add_argument('--n_images', type=int, default=0)
+# parser.add_argument("--pose", type=int, default=0)  # 0-straight, 1-slouche
+parser.add_argument('--skip-vid2pic', type=int, default=1)
+parser.add_argument('--skip-movenet', type=int, default=1)
+parser.add_argument('--skip-learning', type=int, default=0)
+parser.add_argument('--epochs', type=int, default=10)
 args = parser.parse_args()
 
-if args.input == args.output:
-    print(
-        "[WARNING] input dir is the same as output dir -- the pictures will be overwritten"
-    )
-    print("Do you wish to continue?: y/n")
-    if input() != "y":
-        exit()
 
-# get input folder name to create output file name
-input_dir_name = os.path.basename(args.input).split("./", 1)[0]
-start_date = datetime.now().strftime("--%H-%M--%d-%m-%Y")
-output_pic_dir_name = args.output + "/" + input_dir_name + start_date
-output_csv_dir_name = args.output + "/" + input_dir_name + start_date + ".csv"
-if not os.path.exists(output_pic_dir_name):
-    os.makedirs(output_pic_dir_name)
+def main():
+    if args.clear_dir == 1:
+        clear_dirs()
+
+    csvs = []
+
+    if not args.skip_vid2pic:
+        input_vid_names, pic_dir_paths, pose_type = v2p.vid2pic(
+            args.video, args.pic)
+    else:
+        print("Skipping vid2pic segmentation")
+
+    if not os.path.exists(args.csv):
+        os.makedirs(args.csv)
+
+    if not args.skip_movenet:
+        csvs = mn.movenet(pic_dir_paths, input_vid_names,
+                          args.csv, pose_type, args.model)
+    else:
+        csvs = None
+        print("skipping movenet")
+
+    if not os.path.exists(args.results):
+        os.makedirs(args.results)
+    if not os.path.exists(args.results_final):
+        os.makedirs(args.results_final)
+    if not os.path.exists(args.results_graphs):
+        os.makedirs(args.results_graphs)
+
+    splits = t.train(csvs, args.csv, args.results,
+                     args.results_final, args.epochs)
+
+    dis.disp(args.results_final, args.results_graphs, splits, args.epochs)
+
+    post.post()
+
+    print("STOP")
 
 
-movenet, input_size = ut.choose_model(args.model)
+def clear_dirs():
+    results_files = glob.glob(os.path.join(args.results, '*'))
+    results_final_files = glob.glob(os.path.join(args.results_final, '*'))
+    results_graphs_files = glob.glob(os.path.join(args.results_graphs, '*'))
+    for f in results_files:
+        os.remove(f)
+    for f in results_final_files:
+        os.remove(f)
+    for f in results_graphs_files:
+        os.remove(f)
 
-# TODO: sort files according to system sorting not python
-filenames = ut.get_filenames(args.n_images, args.input)
-n_images = len(filenames)
 
-initial_image = tf.io.read_file(filenames[0])
-initial_image = tf.image.decode_jpeg(initial_image)
-image_height, image_width, _ = initial_image.shape
-crop_region = cr.init_crop_region(image_height, image_width)
-
-# output_images = []
-start = time.time()
-
-# PREPARE CSV FILE
-csv_file = open(output_csv_dir_name, "ab")
-np.savetxt(csv_file, su.KEYPOINT_LABELS, delimiter=",", fmt="%s")
-
-for fname in tqdm(filenames, desc="FILE", ascii=True, total=n_images):
-    # Load the input image.
-    image = tf.io.read_file(fname)
-    image = tf.image.decode_jpeg(image)
-    keypoints_with_scores = cr.run_inference(
-        movenet, image[:, :, :], crop_region,
-        crop_size=[input_size, input_size])
-
-    write = np.hstack([fname,
-                      args.pose,
-                      np.squeeze(keypoints_with_scores).flatten()]).reshape([1, 53])
-    np.savetxt(csv_file, write, delimiter=",", fmt='%s')
-
-    # output_images.append(du.draw_prediction_on_image(
-    #     image[:, :, :].numpy().astype(np.int32),
-    #     keypoints_with_scores, crop_region=None,
-    #     close_figure=True, output_image_height=image_height))
-    crop_region = cr.determine_crop_region(
-        keypoints_with_scores, image_height, image_width)
-
-print(': : : Average FPS:', n_images / (time.time() - start))
-csv_file.close()
-
-# output = np.stack(output_images, axis=0)
-# du.to_gif(output, fps=10)
+main()
