@@ -43,7 +43,7 @@ def train(csvs, output, results, final_results, epochs):
 
         for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=3, leave=False):
 
-            history_logger, validation_logger = loggers(results, model_name)
+            history_logger, _ = loggers(results, model_name)
             # model.fit(train, epochs=epochs, callbacks=[
             #     history_logger], verbose=0)
             # model.evaluate(
@@ -69,16 +69,27 @@ def train(csvs, output, results, final_results, epochs):
                 print("WARNING: rescube subtable error")
     additional_metrics(results, final_results)
     np.save(os.path.join(results, "rescube"), rescube)
+
     with open(os.path.join(results, "legend.json"), "w") as outfile:
         json.dump(
             {
                 "models": list(model_names),
                 "metrics": list(tut.skl_metrics.keys()),
                 "folds": folds,
+                "repeats": repeats
             },
             outfile,
             indent="\t",
         )
+    print(rescube)
+    print(rescube.shape)
+
+    for mi, model_name in enumerate(model_names):
+        m = pd.read_csv("{}/metrics_{}.csv".format(final_results, model_name))
+        for si, skl_metric in enumerate(tut.skl_metrics.keys()):
+            m[skl_metric] = rescube[:, mi, si]
+        m.to_csv(os.path.join(final_results, "metrics_" + model_name + ".csv"))
+
     return folds*repeats
 
 
@@ -103,7 +114,7 @@ def load_split(csvs, folds, repeats):
 
 def loggers(results, model_name):
     history_logger = tf.keras.callbacks.CSVLogger(
-        "{}/training_{}.csv".format(results, model_name), separator=",", append=True)
+        "{}/metrics_{}.csv".format(results, model_name), separator=",", append=True)
 
     validation_logger = tf.keras.callbacks.CSVLogger(
         "{}/validation_{}.csv".format(results, model_name), separator=",", append=True)

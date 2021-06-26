@@ -2,7 +2,7 @@ import tensorflow as tf
 # import tensorflow_addons as tfa
 # import tensorflow_model_analysis as tfma
 from tensorflow.keras import layers
-from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score
 from imblearn.metrics import geometric_mean_score
 from tensorflow.python.keras.layers.core import Dropout
 
@@ -73,12 +73,13 @@ METRICS = [tf.keras.metrics.Precision(name='precision'),
            ]
 
 skl_metrics = {
-    "kappa": cohen_kappa_score,
+    "accuracy": accuracy_score,
     "bac": balanced_accuracy_score,
-    "fscore": f1_score,
-    "gmean": geometric_mean_score,
     "precision": precision_score,
     "recall": recall_score,
+    "fscore": f1_score,
+    "gmean": geometric_mean_score,
+    "kappa": cohen_kappa_score,
 }
 
 

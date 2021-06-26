@@ -70,30 +70,71 @@
 # print(fn)
 # print(recall)
 
-from packaging import version
+# from packaging import version
 
+# import pandas as pd
+# from matplotlib import pyplot as plt
+# import seaborn as sns
+# from scipy import stats
+# import tensorboard as tb
+
+# major_ver, minor_ver, _ = version.parse(tb.__version__).release
+# assert major_ver >= 2 and minor_ver >= 3, \
+#     "This notebook requires TensorBoard 2.3 or later."
+# print("TensorBoard version: ", tb.__version__)
+
+# experiment_id = "c1KCv3X3QvGwaXfgX1c4tg"
+# experiment = tb.data.experimental.ExperimentFromDev(experiment_id)
+# df = experiment.get_scalars()
+# print(df)
+# print(df["run"].unique())
+# print(df["tag"].unique())
+
+# plt.figure(figsize=(16, 6))
+# plt.subplot(1, 2, 1)
+# sns.lineplot(data=dfw_validation, x="step", y="epoch_accuracy",
+#              hue=optimizer_validation).set_title("accuracy")
+# plt.subplot(1, 2, 2)
+# sns.lineplot(data=dfw_validation, x="step", y="epoch_loss",
+#              hue=optimizer_validation).set_title("loss")
+
+
+from sklearn.utils import shuffle
+import util as ut
+import os
 import pandas as pd
-from matplotlib import pyplot as plt
-import seaborn as sns
-from scipy import stats
-import tensorboard as tb
+import training_util as tut
+import numpy as np
 
-major_ver, minor_ver, _ = version.parse(tb.__version__).release
-assert major_ver >= 2 and minor_ver >= 3, \
-    "This notebook requires TensorBoard 2.3 or later."
-print("TensorBoard version: ", tb.__version__)
+file_paths, file_names, pose_type = ut.get_csvs_paths(
+    os.path.join("5-people-csvs"))
 
-experiment_id = "c1KCv3X3QvGwaXfgX1c4tg"
-experiment = tb.data.experimental.ExperimentFromDev(experiment_id)
-df = experiment.get_scalars()
-print(df)
-print(df["run"].unique())
-print(df["tag"].unique())
 
-plt.figure(figsize=(16, 6))
-plt.subplot(1, 2, 1)
-sns.lineplot(data=dfw_validation, x="step", y="epoch_accuracy",
-             hue=optimizer_validation).set_title("accuracy")
-plt.subplot(1, 2, 2)
-sns.lineplot(data=dfw_validation, x="step", y="epoch_loss",
-             hue=optimizer_validation).set_title("loss")
+init = list.pop(file_paths)
+ds = pd.read_csv(init)
+for i, csv in enumerate(file_paths):
+    read = pd.read_csv(csv)
+    ds = pd.concat([ds, read], axis=0)
+
+
+ds.pop('filepath')
+for p in tut.excessive_pred:
+    ds.pop(p)
+for e in tut.excessive:
+    ds.pop(e)
+
+ds = shuffle(ds, random_state=420)
+ds.reset_index(drop=True)
+label = ds.pop("pose_type")
+lable = pd.Series(np.where(label.values == 1, "bad", "good"),
+                  label.index)
+
+ds = pd.concat([ds, label], axis=1)
+
+small_csv = ds.sample(n=2000)
+
+small_csv.to_csv(os.path.join(
+    "results", "5_people_small.csv"), sep='\t', index=False, header=True)
+print(small_csv.head())
+# ds.to_csv(os.path.join(
+#     "results", "5_people.csv"), sep='\t', index=False, header=False)
