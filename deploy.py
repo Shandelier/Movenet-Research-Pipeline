@@ -1,10 +1,11 @@
-import pandas as pd
+import tensorflow as tf
+import tensorflowjs as tfjs
 import numpy as np
+import os
 from tqdm import tqdm
+import pandas as pd
 import util as ut
 import training_util as tut
-import tensorflow as tf
-import os
 
 
 def deploy(csvs=None, output=os.path.join("output"), results=os.path.join("saved_models"), epochs=100):
@@ -29,11 +30,13 @@ def deploy(csvs=None, output=os.path.join("output"), results=os.path.join("saved
 
     models, model_names = tut.get_models_and_names()
 
-    for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=0, leave=False):
+    for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=len(models), leave=False):
         history_logger = loggers(results, model_name)
         model.fit(ds, epochs=epochs, callbacks=[
-            history_logger], verbose=1)
-        model.save(os.path.join("saved_models", model_name))
+            history_logger], verbose=0)
+        model.save(os.path.join("saved_models", model_name+".h5"))
+        tfjs.converters.save_keras_model(
+            model, os.path.join("saved_model_js", model_name))
 
 
 def load_split(csvs, folds, repeats):
@@ -77,6 +80,20 @@ def read_csvs(csvs):
     ds = ds.astype(dtype=np.float32)
     ds_labels = ds_labels.astype(dtype=np.float32)
     return ds, ds_labels
+
+
+def default_model():
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(51),
+        tf.keras.layers.Dense(64),
+        tf.keras.layers.Dense(1)
+    ])
+    model.compile(loss=tf.losses.MeanSquaredError(),
+                  optimizer=tf.optimizers.Adam())
+    model.build([1, 1, 17, 3])
+    model.save(os.path.join("saved_models", "default.h5"))
+    tfjs.converters.save_keras_model(
+        model, os.path.join("saved_models", "default-js"))
 
 
 deploy()
