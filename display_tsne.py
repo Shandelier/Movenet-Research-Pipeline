@@ -29,9 +29,10 @@ for e in tut.excessive:
     ds.pop(e)
 
 ds = shuffle(ds, random_state=420)
-ds.reset_index(drop=True)
+ds = ds.reset_index(drop=True)
 ds = ds.sample(n=200)
 label = ds.pop("pose_type")
+print(label)
 
 
 X = ds.to_numpy()

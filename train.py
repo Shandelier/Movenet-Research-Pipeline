@@ -67,6 +67,8 @@ def train(csvs, output, results, final_results, epochs):
             except:
                 rescube[split_n, model_n, :] = np.nan
                 print("WARNING: rescube subtable error")
+            
+            
     additional_metrics(results, final_results)
     np.save(os.path.join(results, "rescube"), rescube)
 
@@ -150,7 +152,7 @@ def read_csvs(csvs):
         read = pd.read_csv(csv)
         ds = pd.concat([ds, read], axis=0)
 
-    ds.reset_index(drop=True)
+    ds = ds.reset_index(drop=True)
     from sklearn.utils import shuffle
     ds = shuffle(ds, random_state=420)
 

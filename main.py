@@ -5,6 +5,7 @@ import glob
 import movenet as mn
 import vid2pic as v2p
 import train as t
+import util as ut
 import display_results as dis
 import post
 
@@ -38,6 +39,9 @@ def main():
         input_vid_names, pic_dir_paths, pose_type = v2p.vid2pic(
             args.video, args.pic)
     else:
+        pic_dir_paths = ["./jojo/0_jojo", "./jojo/1_jojo"]
+        input_vid_names, input_vid_names, pose_type = ut.get_paths(
+            args.pic, '.jpg')
         print("Skipping vid2pic segmentation")
 
     if not os.path.exists(args.csv):
@@ -59,7 +63,6 @@ def main():
 
     splits = t.train(csvs, args.csv, args.results,
                      args.results_final, args.epochs)
-
     dis.disp(args.results_final, args.results_graphs, splits, args.epochs)
 
     post.post()
