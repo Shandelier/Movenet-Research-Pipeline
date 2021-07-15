@@ -46,9 +46,8 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
                 movenet, image[:, :, :], crop_region,
                 crop_size=[input_size, input_size])
 
-            write = np.hstack([fname,
-                               pose, np.squeeze(keypoints_with_scores)
-                               .flatten()]).reshape([1, 53])
+            write = np.hstack(
+                [fname, pose, keypoints_with_scores.squeeze().T.flatten()]).reshape([1, 53])
             np.savetxt(csv_file, write, delimiter=",", fmt='%s')
 
             # output_images.append(du.draw_prediction_on_image(

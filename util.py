@@ -46,6 +46,25 @@ def get_csvs_paths(input):
     return file_paths, file_names, pose_type
 
 
+def get_pics_paths(input):
+    file_paths = [
+        f.path for f in os.scandir(input) if f.is_dir()]
+    file_names = [os.path.basename(f).split(".", 1)[0] for f in file_paths]
+    pose_type = [f.split("_", 1)[0] for f in file_names]
+
+    return file_paths, file_names, pose_type
+
+
+def get_paths(input, file_extension):
+    file_paths = [os.path.join(path, name) for path, subdirs,
+                  files in os.walk(input) for name in files]
+    file_names = [os.path.basename(f).split(".", 1)[
+        0] for f in file_paths]
+    pose_type = [f.split("_", 1)[0] for f in file_names]
+
+    return file_paths, file_names, pose_type
+
+
 def get_result_type(metric_str, rdir='results'):
     path_pattern = os.path.join(rdir, metric_str+'*.csv')
     file_paths = glob.glob(path_pattern)

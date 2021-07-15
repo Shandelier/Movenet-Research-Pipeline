@@ -15,6 +15,7 @@ def get_models_and_names():
     model = tf.keras.Sequential([
         layers.Dense(22),
         layers.Dense(128),
+        layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),

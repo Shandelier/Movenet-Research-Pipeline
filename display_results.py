@@ -27,7 +27,7 @@ def display_graph(results, val_results, stds, val_stds, model_names, metric_name
         #     array = result.values.tolist()
         #     array =
         #     result = result.append(zero)
-        epochs = np.linspace(0, result.size, result.size)
+        epochs = np.linspace(1, result.size, result.size)
 
         # plt.plot(epochs,
         #          result, label=model_name, color=color, linestyle=':',)
@@ -83,4 +83,4 @@ def disp(results_final=r"./results_final", results_graphs=r"./results_graphs", s
                       model_result_names, m, results_graphs)
 
 
-disp(epochs=50)
+# disp(epochs=50)
