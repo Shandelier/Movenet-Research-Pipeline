@@ -22,7 +22,7 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
 
     movenet, input_size = ut.choose_model(model_type)
 
-    for i, (pp, ocsv, pose) in enumerate(zip(pic_paths, output_csv_dir_names, pose_type)):
+    for pp, ocsv, pose in tqdm(zip(pic_paths, output_csv_dir_names, pose_type), desc="VID", ascii=True, total=len(pic_paths)):
         filenames = ut.get_filenames(0, pp)
         n_images = len(filenames)
 
@@ -38,7 +38,7 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
         csv_file = open(ocsv, "ab")
         np.savetxt(csv_file, su.KEYPOINT_LABELS, delimiter=",", fmt="%s")
 
-        for fname in tqdm(filenames, desc="FILE", ascii=True, total=n_images):
+        for fname in tqdm(filenames, desc="PIC", ascii=True, total=n_images):
             # Load the input image.
             image = tf.io.read_file(fname)
             image = tf.image.decode_jpeg(image)
