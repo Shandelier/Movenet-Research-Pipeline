@@ -44,30 +44,43 @@
 # sample_2000()
 
 
-import tensorflow as tf
-import tensorflow.keras.layers as layers
-import tensorflowjs as tfjs
-import os
-import train as t
-import util as ut
-import training_util as tut
+# import tensorflow as tf
+# import tensorflow.keras.layers as layers
+# import tensorflowjs as tfjs
+# import os
+# import train as t
+# import util as ut
+# import training_util as tut
 
 
-def main():
-    model = tf.keras.Sequential([
-        layers.Dense(22),
-        layers.Dense(8, activation='relu'),
-        layers.Dense(1, activation='sigmoid')
-    ])
-    model.compile(loss=tf.losses.MeanSquaredError(),
-                  optimizer=tf.optimizers.Adam())
+# def main():
+#     model = tf.keras.Sequential([
+#         layers.Dense(22),
+#         layers.Dense(8, activation='relu'),
+#         layers.Dense(1, activation='sigmoid')
+#     ])
+#     model.compile(loss=tf.losses.MeanSquaredError(),
+#                   optimizer=tf.optimizers.Adam())
 
-    csvs, _, _ = ut.get_csvs_paths(r"./output")
-    X, y, _ = t.load_split(csvs, 2, 2)
+#     csvs, _, _ = ut.get_csvs_paths(r"./output")
+#     X, y, _ = t.load_split(csvs, 2, 2)
 
-    model.fit(X, y, epochs=10)
+#     model.fit(X, y, epochs=10)
 
-    tfjs.converters.save_keras_model(model, tfjs_target_dir)
+#     tfjs.converters.save_keras_model(model, tfjs_target_dir)
 
 
-main()
+# main()
+
+
+import numpy as np
+
+# write = np.hstack([fname,
+#                    pose, np.squeeze(keypoints_with_scores).flatten()]).reshape([1, 53])
+
+
+arr = np.linspace(1, 51, 51).reshape([1, 1, 17, 3])
+arr = np.squeeze(arr)
+# arr = np.array([arr[:, col] for col in range(3)]).squeeze().flatten()
+arr = arr.T.flatten()
+print(arr)

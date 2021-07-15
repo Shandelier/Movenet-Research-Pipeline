@@ -44,11 +44,10 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
             image = tf.image.decode_jpeg(image)
             keypoints_with_scores = cr.run_inference(
                 movenet, image[:, :, :], crop_region,
-                crop_size=[input_size, input_size])
+                crop_size=[input_size, input_size]).squeeze().T.flatten()
 
-            write = np.hstack([fname,
-                               pose, np.squeeze(keypoints_with_scores)
-                               .flatten()]).reshape([1, 53])
+            write = np.hstack(
+                [fname, pose, keypoints_with_scores]).reshape([1, 53])
             np.savetxt(csv_file, write, delimiter=",", fmt='%s')
 
             # output_images.append(du.draw_prediction_on_image(

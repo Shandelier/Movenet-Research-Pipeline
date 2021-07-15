@@ -8,7 +8,8 @@ import cv2
 
 source_p = os.path.join('jojo-csv')
 
-XX = [
+part_name_x = [
+    'x_nose',
     'x_left_eye',
     'x_right_eye',
     'x_left_ear',
@@ -24,10 +25,31 @@ XX = [
     'x_left_knee',
     'x_right_knee',
     'x_left_ankle',
-    'x_right_ankle', ]
+    'x_right_ankle'
+]
+
+part_name_arr = [
+    'nose',
+    'left_eye',
+    'right_eye',
+    'left_ear',
+    'right_ear',
+    'left_shoulder',
+    'right_shoulder',
+    'left_elbow',
+    'right_elbow',
+    'left_wrist',
+    'right_wrist',
+    'left_hip',
+    'right_hip',
+    'left_knee',
+    'right_knee',
+    'left_ankle',
+    'right_ankle',
+]
 
 
-def plot_image(file_path, x, y):
+def plot_image(file_path, y, x):
     index = 0
     while(True):
         img = cv2.imread(file_path[index], 1)
@@ -39,15 +61,19 @@ def plot_image(file_path, x, y):
             cv2.circle(img, (w, h),
                        5, (255, 161, 239), -1)
 
+            cv2.putText(img, part_name_arr[i],
+                        (w+10, h+10), cv2.FONT_HERSHEY_DUPLEX,
+                        0.3, (255, 161, 239), 1, cv2.LINE_AA)
+
         cv2.imshow(f'current image', img)
         key = cv2.waitKey(0)
 
-        if key == ord('c'):
+        if key == ord('w'):
             print("\tCopying this one")
-        elif key == ord('x'):
+        elif key == ord('a'):
             if index > 0:
                 index -= 1
-        elif key == ord('v'):
+        elif key == ord('d'):
             index += 1
         elif key == ord('q'):
             break
@@ -76,8 +102,8 @@ for p in tut.excessive_pred:
 labels = ds.pop('pose_type')
 file_path = ds.pop('filepath')
 
-x = ds.pop('x_nose')
-for col in XX:
+x = ds.pop(part_name_x.pop(0))
+for col in part_name_x:
     colu = ds.pop(col)
     x = pd.concat([x, colu], axis=1)
 
