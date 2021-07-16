@@ -11,10 +11,10 @@ def get_models_and_names():
     models = []
     model_names = []
 
-    model_names.append("1_layer_128")
+    model_names.append("1_layer_1024_dropout_05")
     model = tf.keras.Sequential([
-        layers.Dense(22),
-        layers.Dense(128),
+        layers.Dense(51),
+        layers.Dense(1024),
         layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
@@ -25,24 +25,22 @@ def get_models_and_names():
         model
     )
 
-    model_names.append("128_relu")
+    model_names.append("1_layer_1024")
     model = tf.keras.Sequential([
-        layers.Dense(22),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(32, activation='relu'),
-        layers.Dense(16, activation='relu'),
-        layers.Dense(8, activation='relu'),
+        layers.Dense(51),
+        layers.Dense(1024),
         layers.Dense(1, activation='sigmoid')
     ])
     model.compile(loss=tf.losses.MeanSquaredError(),
                   optimizer=tf.optimizers.Adam(),
                   metrics=METRICS)
-    models.append(model)
+    models.append(
+        model
+    )
 
     model_names.append("128_relu_dropout_50")
     model = tf.keras.Sequential([
-        layers.Dense(22),
+        layers.Dense(51),
         layers.Dense(128, activation='relu'),
         layers.Dense(64, activation='relu'),
         layers.Dense(32, activation='relu'),

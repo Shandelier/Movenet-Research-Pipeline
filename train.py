@@ -8,6 +8,8 @@ import os
 import json
 from sklearn.model_selection import train_test_split
 
+BATCH_SIZE = 128
+
 
 def train(csvs, output, results, final_results, epochs):
     if (csvs == None):
@@ -31,11 +33,11 @@ def train(csvs, output, results, final_results, epochs):
             X_test, y_test, test_size=0.2, random_state=420)
 
         train = tf.data.Dataset.from_tensor_slices(
-            (X_train.values, y_train.values)).batch(128)
+            (X_train.values, y_train.values)).batch(BATCH_SIZE)
         validate = tf.data.Dataset.from_tensor_slices(
-            (X_val.values, y_val.values)).batch(128)
+            (X_val.values, y_val.values)).batch(BATCH_SIZE)
         test = tf.data.Dataset.from_tensor_slices(
-            (X_test.values, y_test.values)).batch(128)
+            (X_test.values, y_test.values)).batch(BATCH_SIZE)
 
         y_test = y_test.to_numpy()
 
@@ -147,26 +149,31 @@ def additional_metrics(results, final_results):
 def read_csvs(csvs):
     init = list.pop(csvs)
     ds = pd.read_csv(init)
-    for i, csv in enumerate(csvs):
+    for i, csv in tqdm(enumerate(csvs), desc="Merging CSVs", ascii=True, total=len(csvs)):
         read = pd.read_csv(csv)
         ds = pd.concat([ds, read], axis=0)
 
-    ds = ds.reset_index(drop=True)
+    print("Samples and features: {}".format(ds.shape))
+    class_sizes = ds['pose_type'].value_counts()
+    print("Class 0 = {}, Class 1 = {}".format(class_sizes[0], class_sizes[1]))
+    smaller_class = min(class_sizes)
+    bigger_class = max(class_sizes)
+    print("Class inequality index {}. Class more numerous by {} samples".format(
+        bigger_class/smaller_class, bigger_class-smaller_class))
+    print("Applying undresampling to balance the dataset")
+    ds = ds.groupby('pose_type').apply(lambda x: x.sample(smaller_class))
+
     from sklearn.utils import shuffle
     ds = shuffle(ds, random_state=420)
-
-    count = ds['pose_type'].value_counts()
+    ds = ds.reset_index(drop=True)
 
     sample_filepath = ds.pop('filepath')
     ds_labels = ds.pop('pose_type')
 
-    for p in tut.excessive_pred:
-        ds.pop(p)
-    for e in tut.excessive:
-        ds.pop(e)
-
-    print("Samples and features: {}".format(ds.shape))
-    print("Class 0 = {}, Class 1 = {}".format(count[0], count[1]))
+    # for p in tut.excessive_pred:
+    #     ds.pop(p)
+    # for e in tut.excessive:
+    #     ds.pop(e)
 
     ds = ds.astype(dtype=np.float32)
     ds_labels = ds_labels.astype(dtype=np.float32)
