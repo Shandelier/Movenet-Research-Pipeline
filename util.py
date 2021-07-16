@@ -1,21 +1,6 @@
-import tensorflow as tf
 import os
 import glob
 import json
-
-
-def choose_model(model_name="movenet_lightning"):
-    if (model_name == "movenet_lightning" or model_name == 'li'):
-        module = tf.saved_model.load(
-            "./models/lightning")
-        input_size = 192
-    elif (model_name == "movenet_thunder" or model_name == 'th'):
-        module = tf.saved_model.load("./models/thunder")
-        input_size = 256
-    else:
-        raise ValueError("Unsupported model name: %s" % model_name)
-
-    return module.signatures['serving_default'], input_size
 
 
 def get_filenames(n_images, input):

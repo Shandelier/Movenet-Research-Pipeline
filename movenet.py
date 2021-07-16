@@ -20,7 +20,7 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
         output_path, pdn)+".csv" for i, pdn in enumerate(pic_dir_names)]
     # output_csv_dir_name = os.path.join(output_path, pic_dir_name)+".csv"
 
-    movenet, input_size = ut.choose_model(model_type)
+    movenet, input_size = choose_model(model_type)
 
     for pp, ocsv, pose in tqdm(zip(pic_paths, output_csv_dir_names, pose_type), desc="VID", ascii=True, total=len(pic_paths)):
         filenames = ut.get_filenames(0, pp)
@@ -63,3 +63,17 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
     # output = np.stack(output_images, axis=0)
     # du.to_gif(output, fps=10)
     return output_csv_dir_names
+
+
+def choose_model(model_name="movenet_lightning"):
+    if (model_name == "movenet_lightning" or model_name == 'li'):
+        module = tf.saved_model.load(
+            "./models/lightning")
+        input_size = 192
+    elif (model_name == "movenet_thunder" or model_name == 'th'):
+        module = tf.saved_model.load("./models/thunder")
+        input_size = 256
+    else:
+        raise ValueError("Unsupported model name: %s" % model_name)
+
+    return module.signatures['serving_default'], input_size
