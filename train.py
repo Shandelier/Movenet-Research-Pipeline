@@ -96,17 +96,6 @@ def train(csvs, output, results, final_results, epochs):
     return folds*repeats
 
 
-def load_train_test(csvs):
-    ds, ds_labels = read_csvs(csvs)
-
-    from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(
-        ds, ds_labels, test_size=0.4, random_state=420)
-    X_test, X_val, y_test, y_val = train_test_split(
-        X_test, y_test, test_size=0.2, random_state=420)
-    return X_train, y_train, X_test, y_test, X_val, y_val
-
-
 def load_split(csvs, folds, repeats):
     ds, ds_labels = read_csvs(csvs)
     from sklearn.model_selection import RepeatedStratifiedKFold
@@ -169,11 +158,6 @@ def read_csvs(csvs):
 
     sample_filepath = ds.pop('filepath')
     ds_labels = ds.pop('pose_type')
-
-    # for p in tut.excessive_pred:
-    #     ds.pop(p)
-    # for e in tut.excessive:
-    #     ds.pop(e)
 
     ds = ds.astype(dtype=np.float32)
     ds_labels = ds_labels.astype(dtype=np.float32)
