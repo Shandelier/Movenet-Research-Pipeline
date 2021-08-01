@@ -45,8 +45,9 @@ def train(csvs, output, results, final_results, epochs):
         models, model_names = tut.get_models_and_names()
 
         for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=3, leave=False):
-            history_logger, _, tensorboard_logger = loggers(
+            history_logger, _ = loggers(
                 results, model_name)
+            tensorboard_logger = get_tensorboard_name(model_name)
             # model.fit(train, epochs=epochs, callbacks=[
             #     history_logger], verbose=0)
             # model.evaluate(
@@ -115,10 +116,14 @@ def loggers(results, model_name):
     validation_logger.on_test_batch_end = validation_logger.on_epoch_end
     validation_logger.on_test_end = validation_logger.on_train_end
 
-    logdir = "logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+    return history_logger, validation_logger
 
-    return history_logger, validation_logger, tensorboard_callback
+
+def get_tensorboard_name(model_name):
+    logdir = "logs/{}/".format(model_name) + \
+        datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+    return tensorboard_callback
 
 
 def additional_metrics(results, final_results):
