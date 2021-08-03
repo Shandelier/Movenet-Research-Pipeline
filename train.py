@@ -148,7 +148,8 @@ def read_csvs(csvs):
     print("Class inequality index {}. Class inequal by {} samples".format(
         bigger_class/smaller_class, bigger_class-smaller_class))
     print("Applying undresampling to balance the dataset")
-    ds = ds.groupby('pose_type').apply(lambda x: x.sample(smaller_class))
+    ds = ds.groupby('pose_type').apply(
+        lambda x: x.sample(smaller_class, random_state=420))
 
     from sklearn.utils import shuffle
     ds = shuffle(ds, random_state=420)
