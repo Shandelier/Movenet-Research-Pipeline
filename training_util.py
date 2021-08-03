@@ -1,6 +1,6 @@
 import tensorflow as tf
 # import tensorflow_addons as tfa
-import tensorflow_model_analysis as tfma
+# import tensorflow_model_analysis as tfma
 from tensorflow.keras import layers, regularizers
 from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score
 from imblearn.metrics import geometric_mean_score
@@ -70,11 +70,10 @@ def get_models_and_names():
 METRICS = [tf.keras.metrics.Precision(name='precision'),
            tf.keras.metrics.Recall(name='recall'),
            tf.keras.metrics.BinaryAccuracy(name='accuracy'),
-           tfma.metrics.F1Score(name='Fscore'),
            tf.keras.metrics.TruePositives(name='tp'),
-           #    tf.keras.metrics.FalsePositives(name='fp'),
-           #    tf.keras.metrics.TrueNegatives(name='tn'),
-           #    tf.keras.metrics.FalseNegatives(name='fn'),
+           tf.keras.metrics.FalsePositives(name='fp'),
+           tf.keras.metrics.TrueNegatives(name='tn'),
+           tf.keras.metrics.FalseNegatives(name='fn'),
            ]
 
 skl_metrics = {
