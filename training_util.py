@@ -1,7 +1,7 @@
 import tensorflow as tf
 # import tensorflow_addons as tfa
 # import tensorflow_model_analysis as tfma
-from tensorflow.keras import layers
+from tensorflow.keras import layers, regularizers
 from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score
 from imblearn.metrics import geometric_mean_score
 from tensorflow.python.keras.layers.core import Dropout
@@ -14,7 +14,7 @@ def get_models_and_names():
     model_names.append("1_layer_1024_dropout_05")
     model = tf.keras.Sequential([
         layers.Dense(51),
-        layers.Dense(1024),
+        layers.Dense(1024, kernel_regularizer=regularizers.l2(0.0001)),
         layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
@@ -41,11 +41,17 @@ def get_models_and_names():
     model_names.append("128_relu_dropout_50")
     model = tf.keras.Sequential([
         layers.Dense(51),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(32, activation='relu'),
-        layers.Dense(16, activation='relu'),
-        layers.Dense(8, activation='relu'),
+        layers.Dense(128, activation='relu',
+                     kernel_regularizer=regularizers.l2(0.0001)),
+        layers.Dropout(0.5),
+        layers.Dense(64, activation='relu',
+                     kernel_regularizer=regularizers.l2(0.0001)),
+        layers.Dropout(0.5),
+        layers.Dense(32, activation='relu',
+                     kernel_regularizer=regularizers.l2(0.0001)),
+        layers.Dropout(0.5),
+        layers.Dense(16, activation='relu',
+                     kernel_regularizer=regularizers.l2(0.0001)),
         layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
