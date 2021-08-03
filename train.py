@@ -48,14 +48,10 @@ def train(csvs, output, results, final_results, epochs):
             history_logger, _ = loggers(
                 results, model_name)
             tensorboard_logger = get_tensorboard_name(model_name)
-            # model.fit(train, epochs=epochs, callbacks=[
-            #     history_logger], verbose=0)
-            # model.evaluate(
-            #     validate, callbacks=[validation_logger], return_dict=True, verbose=0)
+
             model.fit(train, epochs=epochs, callbacks=[
                 history_logger, tensorboard_logger], validation_data=validate, verbose=0)
-            # model.evaluate(
-            #     validate, callbacks=[validation_logger], return_dict=True, verbose=0)
+
             pred = np.array(model.predict(test)).ravel()
             pred[:] = pred[:] >= 0.5
 
@@ -88,13 +84,6 @@ def train(csvs, output, results, final_results, epochs):
         )
     print(rescube)
     print(rescube.shape)
-
-    # for mi, model_name in enumerate(model_names):
-    #     m = pd.read_csv("{}/metrics_{}.csv".format(final_results, model_name))
-    #     for si, skl_metric in enumerate(tut.skl_metrics.keys()):
-    #         m[skl_metric] = rescube[:, mi, si]
-    #     m.to_csv(os.path.join(final_results, "metrics_" + model_name + ".csv"))
-
     return folds*repeats
 
 
@@ -147,7 +136,7 @@ def additional_metrics(results, final_results):
 def read_csvs(csvs):
     init = list.pop(csvs)
     ds = pd.read_csv(init)
-    for i, csv in tqdm(enumerate(csvs), desc="Merging CSVs", ascii=True, total=len(csvs)):
+    for _, csv in tqdm(enumerate(csvs), desc="Merging CSVs", ascii=True, total=len(csvs)):
         read = pd.read_csv(csv)
         ds = pd.concat([ds, read], axis=0)
 
@@ -156,7 +145,7 @@ def read_csvs(csvs):
     print("Class 0 = {}, Class 1 = {}".format(class_sizes[0], class_sizes[1]))
     smaller_class = min(class_sizes)
     bigger_class = max(class_sizes)
-    print("Class inequality index {}. Class more numerous by {} samples".format(
+    print("Class inequality index {}. Class inequal by {} samples".format(
         bigger_class/smaller_class, bigger_class-smaller_class))
     print("Applying undresampling to balance the dataset")
     ds = ds.groupby('pose_type').apply(lambda x: x.sample(smaller_class))
