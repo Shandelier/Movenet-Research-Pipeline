@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+from datetime import datetime
 import util as ut
 import training_util as tut
 import tensorflow as tf
@@ -44,14 +45,15 @@ def train(csvs, output, results, final_results, epochs):
         models, model_names = tut.get_models_and_names()
 
         for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=3, leave=False):
-
-            history_logger, _ = loggers(results, model_name)
+            history_logger, _ = loggers(
+                results, model_name)
+            tensorboard_logger = get_tensorboard_name(model_name)
             # model.fit(train, epochs=epochs, callbacks=[
             #     history_logger], verbose=0)
             # model.evaluate(
             #     validate, callbacks=[validation_logger], return_dict=True, verbose=0)
             model.fit(train, epochs=epochs, callbacks=[
-                history_logger], validation_data=validate, verbose=0)
+                history_logger, tensorboard_logger], validation_data=validate, verbose=0)
             # model.evaluate(
             #     validate, callbacks=[validation_logger], return_dict=True, verbose=0)
             pred = np.array(model.predict(test)).ravel()
@@ -115,6 +117,13 @@ def loggers(results, model_name):
     validation_logger.on_test_end = validation_logger.on_train_end
 
     return history_logger, validation_logger
+
+
+def get_tensorboard_name(model_name):
+    logdir = "logs/{}/".format(model_name) + \
+        datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+    return tensorboard_callback
 
 
 def additional_metrics(results, final_results):
