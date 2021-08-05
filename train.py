@@ -10,6 +10,8 @@ import json
 from sklearn.model_selection import train_test_split
 
 BATCH_SIZE = 128
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
+os.environ['AUTOGRAPH_VERBOSITY'] = '0'
 
 
 def train(csvs, output, results, final_results, epochs):
@@ -46,7 +48,7 @@ def train(csvs, output, results, final_results, epochs):
 
         for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=3, leave=False):
             history_logger, _ = loggers(
-                results, model_name)
+                final_results, model_name)
             tensorboard_logger = get_tensorboard_name(model_name)
 
             model.fit(train, epochs=epochs, callbacks=[
@@ -68,7 +70,6 @@ def train(csvs, output, results, final_results, epochs):
                 rescube[split_n, model_n, :] = np.nan
                 print("WARNING: rescube subtable error")
 
-    additional_metrics(results, final_results)
     np.save(os.path.join(results, "rescube"), rescube)
 
     with open(os.path.join(results, "legend.json"), "w") as outfile:
@@ -113,24 +114,6 @@ def get_tensorboard_name(model_name):
         datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
     return tensorboard_callback
-
-
-def additional_metrics(results, final_results):
-    csv_list, csv_names, _ = ut.get_csvs_paths(results)
-    for i, (csv, name) in tqdm(enumerate(zip(csv_list, csv_names)), desc="File", ascii=True, total=len(csv_list)):
-        metrics = pd.read_csv(csv)
-        history = metrics.copy()
-        precision = history.pop("precision")
-        recall = history.pop("recall")
-        val_precision = history.pop("val_precision")
-        val_recall = history.pop("val_recall")
-
-        fscore = 2 * (precision * recall) / (precision + recall)
-        val_fscore = 2 * (val_precision * val_recall) / \
-            (val_precision + val_recall)
-        metrics['fscore'] = fscore
-        metrics['val_fscore'] = val_fscore
-        metrics.to_csv(os.path.join(final_results, name+".csv"))
 
 
 def read_csvs(csvs):

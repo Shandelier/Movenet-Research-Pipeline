@@ -1,5 +1,4 @@
 import tensorflow as tf
-# import tensorflow_addons as tfa
 # import tensorflow_model_analysis as tfma
 from tensorflow.keras import layers, regularizers
 from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score
@@ -67,14 +66,145 @@ def get_models_and_names():
     return models, model_names
 
 
-METRICS = [tf.keras.metrics.Precision(name='precision'),
-           tf.keras.metrics.Recall(name='recall'),
-           tf.keras.metrics.BinaryAccuracy(name='accuracy'),
-           tf.keras.metrics.TruePositives(name='tp'),
-           tf.keras.metrics.FalsePositives(name='fp'),
-           tf.keras.metrics.TrueNegatives(name='tn'),
-           tf.keras.metrics.FalseNegatives(name='fn'),
-           ]
+class Specificity(tf.keras.metrics.Metric):
+    def __init__(self, name='specificity', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.tn = tf.keras.metrics.TrueNegatives()
+        self.fp = tf.keras.metrics.FalsePositives()
+        self.specificity = self.add_weight(
+            name='specificity', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        tn = self.tn(y_true, y_pred)
+        fp = self.fp(y_true, y_pred)
+        # since f1 is a variable, we use assign
+        self.specificity.assign((tn) / (fp + tn + 1e-6))
+
+    def result(self):
+        return self.specificity
+
+    def reset_states(self):
+        self.tn.reset_states()
+        self.fp.reset_states()
+        self.specificity.assign(0)
+
+
+class Sensitivity(tf.keras.metrics.Metric):
+    def __init__(self, name='sensitivity', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.tp = tf.keras.metrics.TruePositives()
+        self.fn = tf.keras.metrics.FalseNegatives()
+        self.sensitivity = self.add_weight(
+            name='sensitivity', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        tp = self.tp(y_true, y_pred)
+        fn = self.fn(y_true, y_pred)
+        # since f1 is a variable, we use assign
+        self.sensitivity.assign((tp) / (tp + fn + 1e-6))
+
+    def result(self):
+        return self.sensitivity
+
+    def reset_states(self):
+        self.tp.reset_states()
+        self.fn.reset_states()
+        self.sensitivity.assign(0)
+
+
+class F1_Score(tf.keras.metrics.Metric):
+
+    def __init__(self, name='fscore', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.f1 = self.add_weight(name='fscore', initializer='zeros')
+        self.precision_fn = tf.keras.metrics.Precision(thresholds=0.5)
+        self.recall_fn = tf.keras.metrics.Recall(thresholds=0.5)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        p = self.precision_fn(y_true, y_pred)
+        r = self.recall_fn(y_true, y_pred)
+        # since f1 is a variable, we use assign
+        self.f1.assign(2 * ((p * r) / (p + r + 1e-6)))
+
+    def result(self):
+        return self.f1
+
+    def reset_states(self):
+        self.precision_fn.reset_states()
+        self.recall_fn.reset_states()
+        self.f1.assign(0)
+
+
+class GeometricMean(tf.keras.metrics.Metric):
+    def __init__(self, name='gmean', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.spec = Specificity()
+        self.sen = Sensitivity()
+        self.gmean = self.add_weight(name='gmean', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        spec = self.spec(y_true, y_pred)
+        sen = self.sen(y_true, y_pred)
+        self.gmean.assign(tf.math.sqrt(spec * sen))
+
+    def result(self):
+        return self.gmean
+
+    def reset_states(self):
+        self.gmean.assign(0)
+
+
+class Kappa(tf.keras.metrics.Metric):
+    def __init__(self, name='kappa', **kwargs):
+        super().__init__(name=name, **kwargs)
+        # TODO: kappa doesn't work
+        self.kappa_fn = cohen_kappa_score
+        self.kappa = self.add_weight(name='kappa', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        self.kappa.assign(self.kappa_fn(y_true, y_pred))
+
+    def result(self):
+        return self.kappa
+
+    def reset_states(self):
+        self.kappa.assign(0)
+
+
+class BalancedAccuracy(tf.keras.metrics.Metric):
+    def __init__(self, name='bac', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.spec = Specificity()
+        self.sen = Sensitivity()
+        self.bac = self.add_weight(name='bac', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        spec = self.spec(y_true, y_pred)
+        sen = self.sen(y_true, y_pred)
+        self.bac.assign((sen + spec)/2)
+
+    def result(self):
+        return self.bac
+
+    def reset_states(self):
+        self.bac.assign(0)
+
+
+METRICS = [
+    tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+    BalancedAccuracy(),
+    # Kappa(),
+    tf.keras.metrics.Precision(name='precision'),
+    tf.keras.metrics.Recall(name='recall'),
+    F1_Score(),
+    Specificity(),
+    Sensitivity(),
+    GeometricMean(),
+    #    tf.keras.metrics.TruePositives(name='tp'),
+    #    tf.keras.metrics.FalsePositives(name='fp'),
+    #    tf.keras.metrics.TrueNegatives(name='tn'),
+    #    tf.keras.metrics.FalseNegatives(name='fn'),
+]
 
 skl_metrics = {
     "accuracy": accuracy_score,

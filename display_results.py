@@ -52,9 +52,10 @@ def display_graph(results, val_results, stds, val_stds, model_names, metric_name
 
 
 def disp(results_final=r"./results_final", results_graphs=r"./results_graphs", splits=10, epochs=10):
-    metrics = ['accuracy', 'precision', 'recall', 'fscore', 'loss']
+    metrics = ['accuracy', 'precision', 'recall',
+               'fscore', 'loss', 'gmean', 'bac']
     val_metrics = ['val_accuracy', 'val_precision',
-                   'val_recall', 'val_fscore', 'val_loss']
+                   'val_recall', 'val_fscore', 'val_loss', 'val_gmean', 'val_bac']
     csv_list, csv_names, _ = ut.get_csvs_paths(results_final)
 
     history = []
