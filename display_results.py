@@ -7,6 +7,17 @@ import os
 
 basic = ["#3772ff", "#df2935", "#fdca40", "#080708", "#2FCF51"]
 basic_saturated = ["#3874ff", "#fb0e1e", "#ffcb3d", "#06f93a", "#0e010e"]
+graph_frame = {
+    'accuracy': [0.8, 0.975],
+    'precision': [0.7, 1],
+    'recall': [0.75, 1],
+    'fscore': [0, 0.975],
+    'loss': [0, 1],
+    'sensitivity': [0.75, 1],
+    'specificity': [0.7, 1],
+    'gmean': [0.85, 0.92],
+    'bac': [0.80, 1],
+}
 
 
 def display_graph(results, val_results, stds, val_stds, model_names, metric_name, results_graphs):
@@ -41,21 +52,18 @@ def display_graph(results, val_results, stds, val_stds, model_names, metric_name
         # plt.errorbar(epochs,
         #              val_result, yerr=val_std, label="val_"+model_name, color=color, linestyle='solid')
         plt.xlabel('Epoch')
+        plt.ylim(graph_frame.get(metric_name))
         plt.ylabel(metric_name)
-        if metric_name == 'loss':
-            plt.ylim([0, 0.2])
-        else:
-            plt.ylim([0.4, 1])
         plt.legend()
     plt.savefig(os.path.join(results_graphs,
                              '{}.png'.format(metric_name)), dpi=300)
 
 
 def disp(results_final=r"./results_final", results_graphs=r"./results_graphs", splits=10, epochs=10):
-    metrics = ['accuracy', 'precision', 'recall',
-               'fscore', 'loss', 'gmean', 'bac']
-    val_metrics = ['val_accuracy', 'val_precision',
-                   'val_recall', 'val_fscore', 'val_loss', 'val_gmean', 'val_bac']
+    metrics = ['accuracy', 'bac', 'precision', 'recall',
+               'fscore', 'loss', 'specificity', 'sensitivity', 'gmean']
+    val_metrics = ['val_accuracy', 'val_precision', 'val_recall', 'val_fscore',
+                   'val_loss', 'val_specificity', 'val_sensitivity', 'val_gmean', 'val_bac']
     csv_list, csv_names, _ = ut.get_csvs_paths(results_final)
 
     history = []
@@ -84,4 +92,4 @@ def disp(results_final=r"./results_final", results_graphs=r"./results_graphs", s
                       model_result_names, m, results_graphs)
 
 
-# disp(epochs=50)
+disp(epochs=50)
