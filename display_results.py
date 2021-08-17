@@ -11,8 +11,8 @@ graph_frame = {
     'accuracy': [0.8, 0.975],
     'precision': [0.7, 1],
     'recall': [0.75, 1],
-    'fscore': [0, 0.975],
-    'loss': [0, 1],
+    'fscore': [0.85, 1],
+    'loss': [0.04, 0.15],
     'sensitivity': [0.75, 1],
     'specificity': [0.7, 1],
     'gmean': [0.85, 0.92],
@@ -62,8 +62,8 @@ def display_graph(results, val_results, stds, val_stds, model_names, metric_name
 def disp(results_final=r"./results_final", results_graphs=r"./results_graphs", splits=10, epochs=10):
     metrics = ['accuracy', 'bac', 'precision', 'recall',
                'fscore', 'loss', 'specificity', 'sensitivity', 'gmean']
-    val_metrics = ['val_accuracy', 'val_precision', 'val_recall', 'val_fscore',
-                   'val_loss', 'val_specificity', 'val_sensitivity', 'val_gmean', 'val_bac']
+
+    val_metrics = ['val_'+m for m in metrics]
     csv_list, csv_names, _ = ut.get_csvs_paths(results_final)
 
     history = []
@@ -90,6 +90,7 @@ def disp(results_final=r"./results_final", results_graphs=r"./results_graphs", s
             model_result_names.append(name)
         display_graph(metric_result_list, val_metric_result_list, metric_std_list, val_metric_std_list,
                       model_result_names, m, results_graphs)
+    print("Graphs ready")
 
 
 disp(epochs=50)

@@ -77,7 +77,6 @@ class Specificity(tf.keras.metrics.Metric):
     def update_state(self, y_true, y_pred, sample_weight=None):
         tn = self.tn(y_true, y_pred)
         fp = self.fp(y_true, y_pred)
-        # since f1 is a variable, we use assign
         self.specificity.assign((tn) / (fp + tn + 1e-6))
 
     def result(self):
@@ -109,7 +108,7 @@ class Sensitivity(tf.keras.metrics.Metric):
     def reset_states(self):
         self.tp.reset_states()
         self.fn.reset_states()
-        self.sensitivity.assign(0)
+        self.sensitivity.assign(0.0)
 
 
 class F1_Score(tf.keras.metrics.Metric):
@@ -138,19 +137,29 @@ class F1_Score(tf.keras.metrics.Metric):
 class GeometricMean(tf.keras.metrics.Metric):
     def __init__(self, name='gmean', **kwargs):
         super().__init__(name=name, **kwargs)
-        self.spec = Specificity()
-        self.sen = Sensitivity()
+        self.tp = tf.keras.metrics.TruePositives()
+        self.tn = tf.keras.metrics.TrueNegatives()
+        self.fp = tf.keras.metrics.FalsePositives()
+        self.fn = tf.keras.metrics.FalseNegatives()
         self.gmean = self.add_weight(name='gmean', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        spec = self.spec(y_true, y_pred)
-        sen = self.sen(y_true, y_pred)
+        tp = self.tp(y_true, y_pred)
+        tn = self.tn(y_true, y_pred)
+        fp = self.fp(y_true, y_pred)
+        fn = self.fn(y_true, y_pred)
+        spec = ((tn) / (fp + tn + 1e-6))
+        sen = ((tp) / (tp + fn + 1e-6))
         self.gmean.assign(tf.math.sqrt(spec * sen))
 
     def result(self):
         return self.gmean
 
     def reset_states(self):
+        self.tp.reset_states()
+        self.tn.reset_states()
+        self.fp.reset_states()
+        self.fn.reset_states()
         self.gmean.assign(0)
 
 
@@ -174,19 +183,29 @@ class Kappa(tf.keras.metrics.Metric):
 class BalancedAccuracy(tf.keras.metrics.Metric):
     def __init__(self, name='bac', **kwargs):
         super().__init__(name=name, **kwargs)
-        self.spec = Specificity()
-        self.sen = Sensitivity()
+        self.tp = tf.keras.metrics.TruePositives()
+        self.tn = tf.keras.metrics.TrueNegatives()
+        self.fp = tf.keras.metrics.FalsePositives()
+        self.fn = tf.keras.metrics.FalseNegatives()
         self.bac = self.add_weight(name='bac', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        spec = self.spec(y_true, y_pred)
-        sen = self.sen(y_true, y_pred)
+        tp = self.tp(y_true, y_pred)
+        tn = self.tn(y_true, y_pred)
+        fp = self.fp(y_true, y_pred)
+        fn = self.fn(y_true, y_pred)
+        spec = ((tn) / (fp + tn + 1e-6))
+        sen = ((tp) / (tp + fn + 1e-6))
         self.bac.assign((sen + spec)/2)
 
     def result(self):
         return self.bac
 
     def reset_states(self):
+        self.tp.reset_states()
+        self.tn.reset_states()
+        self.fp.reset_states()
+        self.fn.reset_states()
         self.bac.assign(0)
 
 
