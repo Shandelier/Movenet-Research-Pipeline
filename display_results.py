@@ -9,14 +9,14 @@ basic = ["#3772ff", "#df2935", "#fdca40", "#080708", "#2FCF51"]
 basic_saturated = ["#3874ff", "#fb0e1e", "#ffcb3d", "#06f93a", "#0e010e"]
 graph_frame = {
     'accuracy': [0.8, 0.975],
-    'precision': [0.7, 1],
-    'recall': [0.75, 1],
-    'fscore': [0.85, 1],
+    'precision': [0.75, 1],
+    'recall': [0.70, 1],
+    'fscore': [0.8, .975],
     'loss': [0.04, 0.15],
-    'sensitivity': [0.75, 1],
-    'specificity': [0.7, 1],
-    'gmean': [0.85, 0.92],
-    'bac': [0.80, 1],
+    'sensitivity': [0.7, 1],
+    'specificity': [0.75, 1],
+    'gmean': [0.8, .975],
+    'bac': [0.80, .975],
 }
 
 
