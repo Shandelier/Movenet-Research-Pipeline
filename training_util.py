@@ -16,8 +16,8 @@ def get_models_and_names():
         layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
-    model.compile(loss=tf.losses.MeanSquaredError(),
-                  optimizer=tf.optimizers.Adam(),
+    model.compile(loss='binary_crossentropy',
+                  optimizer='Adam',
                   metrics=METRICS)
     models.append(
         model
@@ -29,8 +29,8 @@ def get_models_and_names():
         layers.Dense(1024),
         layers.Dense(1, activation='sigmoid')
     ])
-    model.compile(loss=tf.losses.MeanSquaredError(),
-                  optimizer=tf.optimizers.Adam(),
+    model.compile(loss='binary_crossentropy',
+                  optimizer='Adam',
                   metrics=METRICS)
     models.append(
         model
@@ -53,8 +53,8 @@ def get_models_and_names():
         layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
-    model.compile(loss=tf.losses.MeanSquaredError(),
-                  optimizer=tf.optimizers.Adam(),
+    model.compile(loss='binary_crossentropy',
+                  optimizer='Adam',
                   metrics=METRICS)
     models.append(
         model
