@@ -5,13 +5,13 @@ from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, accuracy
 from imblearn.metrics import geometric_mean_score
 
 
-def get_models_and_names():
+def get_models_and_names(first_layer):
     models = []
     model_names = []
 
     model_names.append("1_layer_1024_dropout_05")
     model = tf.keras.Sequential([
-        layers.Dense(51),
+        layers.Dense(first_layer),
         layers.Dense(1024, kernel_regularizer=regularizers.l1(0.001)),
         layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
@@ -25,7 +25,7 @@ def get_models_and_names():
 
     model_names.append("1_layer_1024")
     model = tf.keras.Sequential([
-        layers.Dense(51),
+        layers.Dense(first_layer),
         layers.Dense(1024),
         layers.Dense(1, activation='sigmoid')
     ])
@@ -38,18 +38,18 @@ def get_models_and_names():
 
     model_names.append("128_relu_dropout_50")
     model = tf.keras.Sequential([
-        layers.Dense(51),
+        layers.Dense(first_layer),
         layers.Dense(128, activation='relu',
-                     kernel_regularizer=regularizers.l1(0.001)),
+                     kernel_regularizer=regularizers.l1(0.0001)),
         layers.Dropout(0.5),
         layers.Dense(64, activation='relu',
-                     kernel_regularizer=regularizers.l1(0.001)),
+                     kernel_regularizer=regularizers.l1(0.0001)),
         layers.Dropout(0.5),
         layers.Dense(32, activation='relu',
-                     kernel_regularizer=regularizers.l1(0.001)),
+                     kernel_regularizer=regularizers.l1(0.0001)),
         layers.Dropout(0.5),
         layers.Dense(16, activation='relu',
-                     kernel_regularizer=regularizers.l1(0.001)),
+                     kernel_regularizer=regularizers.l1(0.0001)),
         layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
@@ -82,9 +82,9 @@ class Specificity(tf.keras.metrics.Metric):
     def result(self):
         return self.specificity
 
-    def reset_states(self):
-        self.tn.reset_states()
-        self.fp.reset_states()
+    def reset_state(self):
+        self.tn.reset_state()
+        self.fp.reset_state()
         self.specificity.assign(0)
 
 
@@ -105,9 +105,9 @@ class Sensitivity(tf.keras.metrics.Metric):
     def result(self):
         return self.sensitivity
 
-    def reset_states(self):
-        self.tp.reset_states()
-        self.fn.reset_states()
+    def reset_state(self):
+        self.tp.reset_state()
+        self.fn.reset_state()
         self.sensitivity.assign(0.0)
 
 
@@ -128,9 +128,9 @@ class F1_Score(tf.keras.metrics.Metric):
     def result(self):
         return self.f1
 
-    def reset_states(self):
-        self.precision_fn.reset_states()
-        self.recall_fn.reset_states()
+    def reset_state(self):
+        self.precision_fn.reset_state()
+        self.recall_fn.reset_state()
         self.f1.assign(0)
 
 
@@ -155,11 +155,11 @@ class GeometricMean(tf.keras.metrics.Metric):
     def result(self):
         return self.gmean
 
-    def reset_states(self):
-        self.tp.reset_states()
-        self.tn.reset_states()
-        self.fp.reset_states()
-        self.fn.reset_states()
+    def reset_state(self):
+        self.tp.reset_state()
+        self.tn.reset_state()
+        self.fp.reset_state()
+        self.fn.reset_state()
         self.gmean.assign(0)
 
 
@@ -176,7 +176,7 @@ class Kappa(tf.keras.metrics.Metric):
     def result(self):
         return self.kappa
 
-    def reset_states(self):
+    def reset_state(self):
         self.kappa.assign(0)
 
 
@@ -201,11 +201,11 @@ class BalancedAccuracy(tf.keras.metrics.Metric):
     def result(self):
         return self.bac
 
-    def reset_states(self):
-        self.tp.reset_states()
-        self.tn.reset_states()
-        self.fp.reset_states()
-        self.fn.reset_states()
+    def reset_state(self):
+        self.tp.reset_state()
+        self.tn.reset_state()
+        self.fp.reset_state()
+        self.fn.reset_state()
         self.bac.assign(0)
 
 

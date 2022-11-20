@@ -1,43 +1,5 @@
-import glob
-import os
-import warnings
 import pandas as pd
 import numpy as np
-from datetime import datetime
-import drawing_util as du
-
-
-def count_files(path):
-    path = path + "\*.jpg"
-    return len(glob.glob(path))
-
-
-def append_part(arr, path):
-    df = pd.DataFrame(arr)
-    df.to_csv(path, encoding="utf-8", index=False, mode="a", header=False)
-    return 0
-
-
-def create_file_name(
-    path=r"C:\Users\kluse\Documents\python\posenet-python\output" + "\\",
-):
-    today = datetime.now()
-    # return path + today.strftime("%d-%b-%Y-%H-%M") + ".csv"
-    return path + today.strftime("%d-%b-%Y") + ".csv"
-
-
-def create_log_file(path):
-    names = ["postureType", "predScore"]
-    for i, pn in enumerate(du.KEYPOINT_DICT):
-        if i == 7:
-            break
-        names.append(pn + "X")
-    for i, pn in enumerate(du.KEYPOINT_DICT):
-        if i == 7:
-            break
-        names.append(pn + "Y")
-    names = np.asarray([names])
-    np.savetxt(path, names, delimiter=",", encoding="utf-8", fmt="%s")
 
 
 KEYPOINT_LABELS = np.array([['filepath',
@@ -93,3 +55,23 @@ KEYPOINT_LABELS = np.array([['filepath',
                              'pred_right_knee',
                              'pred_left_ankle',
                              'pred_right_ankle', ]])
+
+KEYPOINT_DICT = {
+    'nose': 0,
+    'left_eye': 1,
+    'right_eye': 2,
+    'left_ear': 3,
+    'right_ear': 4,
+    'left_shoulder': 5,
+    'right_shoulder': 6,
+    'left_elbow': 7,
+    'right_elbow': 8,
+    'left_wrist': 9,
+    'right_wrist': 10,
+    'left_hip': 11,
+    'right_hip': 12,
+    'left_knee': 13,
+    'right_knee': 14,
+    'left_ankle': 15,
+    'right_ankle': 16
+}

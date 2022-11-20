@@ -1,3 +1,4 @@
+from sklearn.utils import shuffle
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -8,17 +9,22 @@ import tensorflow as tf
 import os
 import json
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RepeatedStratifiedKFold
+import wandb
+
 
 BATCH_SIZE = 128
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 os.environ['AUTOGRAPH_VERBOSITY'] = '0'
+wandb.init(project="Pose", sync_tensorboard=True)
 
 
-def train(csvs, output, results, final_results, epochs):
-    if (csvs == None):
-        csvs, _, _ = ut.get_csvs_paths(output)
+def train(output, result_path, epochs=10):
+    csvs, csvnames, _ = ut.get_csvs_paths(output)
 
-    np.set_printoptions(precision=3, suppress=True)
+    model_n = 3
+    ds_n = len(csvnames)
+    experiment_n = model_n * ds_n
 
     # result cube dimensions
     c_models = 3
@@ -27,86 +33,46 @@ def train(csvs, output, results, final_results, epochs):
     repeats = 5
     rescube = np.zeros((folds*repeats, c_models, c_metrics))
 
-    X, y, split = load_split(csvs, folds, repeats)
-    for split_n, (train_index, test_index) in tqdm(enumerate(split.split(X, y)), desc="CrossVal", ascii=True, total=folds*repeats):
-        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+    for c, name in zip(csvs, csvnames):
+        ds = pd.read_csv(c)
+        sample_filepath = ds.pop('filepath')
+        y = ds.pop('pose_type')
+        X = ds.copy()
 
-        X_test, X_val, y_test, y_val = train_test_split(
-            X_test, y_test, test_size=0.2, random_state=420)
+        split = RepeatedStratifiedKFold(
+            n_splits=folds, n_repeats=repeats, random_state=420)
 
-        train = tf.data.Dataset.from_tensor_slices(
-            (X_train.values, y_train.values)).batch(BATCH_SIZE)
-        validate = tf.data.Dataset.from_tensor_slices(
-            (X_val.values, y_val.values)).batch(BATCH_SIZE)
-        test = tf.data.Dataset.from_tensor_slices(
-            (X_test.values, y_test.values)).batch(BATCH_SIZE)
+        first_layer = X.shape[1]
 
-        y_test = y_test.to_numpy()
+        models, model_names = tut.get_models_and_names(
+            first_layer=first_layer)
 
-        models, model_names = tut.get_models_and_names()
+        for model, model_name in tqdm(zip(models, model_names), desc="Model", ascii=True, total=3, leave=False):
+            experiment_name = model_name+"_on_"+name
 
-        for model_n, (model, model_name) in tqdm(enumerate(zip(models, model_names)), desc="Model", ascii=True, total=3, leave=False):
-            history_logger, _ = loggers(
-                final_results, model_name)
-            tensorboard_logger = get_tensorboard_name(model_name)
+            for split_n, (train_index, test_index) in tqdm(enumerate(split.split(X, y)), desc="CrossVal", ascii=True, total=folds*repeats):
+                X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+                y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
-            model.fit(train, epochs=epochs, callbacks=[
-                history_logger, tensorboard_logger], validation_data=validate, verbose=0)
+                X_test, X_val, y_test, y_val = train_test_split(
+                    X_test, y_test, test_size=0.2, random_state=420)
 
-            pred = np.array(model.predict(test)).ravel()
-            pred[:] = pred[:] >= 0.5
+                train = tf.data.Dataset.from_tensor_slices(
+                    (X_train.values, y_train.values)).batch(BATCH_SIZE)
+                validate = tf.data.Dataset.from_tensor_slices(
+                    (X_val.values, y_val.values)).batch(BATCH_SIZE)
+                test = tf.data.Dataset.from_tensor_slices(
+                    (X_test.values, y_test.values)).batch(BATCH_SIZE)
 
-            model_scores = []
-            for m in tut.skl_metrics:
-                if m == 'gmean' or m == 'fscore':
-                    model_scores.append(tut.skl_metrics[m](
-                        pred, y_test, average='macro'))
-                    continue
-                model_scores.append(tut.skl_metrics[m](pred, y_test))
-            try:
-                rescube[split_n, model_n, :] = model_scores
-            except:
-                rescube[split_n, model_n, :] = np.nan
-                print("WARNING: rescube subtable error")
+                y_test = y_test.to_numpy()
 
-    np.save(os.path.join(results, "rescube"), rescube)
-
-    with open(os.path.join(results, "legend.json"), "w") as outfile:
-        json.dump(
-            {
-                "models": list(model_names),
-                "metrics": list(tut.skl_metrics.keys()),
-                "folds": folds,
-                "repeats": repeats
-            },
-            outfile,
-            indent="\t",
-        )
-    print(rescube)
-    print(rescube.shape)
-    return folds*repeats
-
-
-def load_split(csvs, folds, repeats):
-    ds, ds_labels = read_csvs(csvs)
-    from sklearn.model_selection import RepeatedStratifiedKFold
-    split = RepeatedStratifiedKFold(
-        n_splits=folds, n_repeats=repeats, random_state=420)
-    return ds, ds_labels, split
-
-
-def loggers(results, model_name):
-    history_logger = tf.keras.callbacks.CSVLogger(
-        "{}/metrics_{}.csv".format(results, model_name), separator=",", append=True)
-
-    validation_logger = tf.keras.callbacks.CSVLogger(
-        "{}/validation_{}.csv".format(results, model_name), separator=",", append=True)
-    validation_logger.on_test_begin = validation_logger.on_train_begin
-    validation_logger.on_test_batch_end = validation_logger.on_epoch_end
-    validation_logger.on_test_end = validation_logger.on_train_end
-
-    return history_logger, validation_logger
+                model.fit(train, epochs=epochs, callbacks=[
+                    get_tensorboard_name(model_name),
+                    # get_wandb(epochs),
+                    get_history_logger(result_path, model_name)
+                ],
+                    validation_data=validate, verbose=0)
+    wandb.finish()
 
 
 def get_tensorboard_name(model_name):
@@ -114,6 +80,67 @@ def get_tensorboard_name(model_name):
         datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
     return tensorboard_callback
+
+
+def get_wandb(epochs):
+    wandb.config = {
+        "learning_rate": 0.001,
+        "epochs": 10,
+        "batch_size": BATCH_SIZE
+    }
+    return wandb.tensorflow.WandbHook(steps_per_log=epochs/10)
+
+
+def get_history_logger(results, model_name):
+    return tf.keras.callbacks.CSVLogger(
+        "{}/metrics_{}.csv".format(results, model_name), separator=",", append=True)
+
+
+# def train(csvs, output, result_path):
+#     csvs, csvnames, _ = ut.get_csvs_paths(output)
+
+#     model_n = 3
+#     ds_n = len(csvnames)
+#     experiment_n = model_n * ds_n
+
+#     for c, name in zip(csvs, csvnames):
+#         ds = pd.read_csv(c)
+
+#         sample_filepath = ds.pop('filepath')
+#         ds_labels = ds.pop('pose_type')
+#         ds_features = ds.copy()
+
+#         models, model_names = tut.get_models_and_names(
+#             first_layer=ds_features.shape[1])
+
+#         for model, model_name in tqdm(zip(models, model_names), desc="MODEL", ascii=True, total=experiment_n):
+#             experiment_name = model_name+"_on_"+name
+#             epochs = 10
+#             history = model.fit(ds_features, ds_labels, epochs=epochs)
+
+#             accuracy = history.history['accuracy']
+#             precision = history.history['precision']
+#             recall = history.history['recall']
+#             loss = history.history['loss']
+#             tp = history.history['tp']
+#             fp = history.history['fp']
+#             tn = history.history['tn']
+#             fn = history.history['fn']
+
+#             results = pd.DataFrame(
+#                 {'epoch': range(epochs),
+#                  'accuracy': accuracy,
+#                  'precision': precision,
+#                  'recall': recall,
+#                  'loss': loss,
+#                  'tp': tp,
+#                  'fp': fp,
+#                  'tn': tn,
+#                  'fn': fn,
+#                  })
+
+#             results.to_csv("{}/{}.csv".format(result_path,
+#                            experiment_name), index=False)
 
 
 def read_csvs(csvs):
@@ -144,3 +171,6 @@ def read_csvs(csvs):
     ds = ds.astype(dtype=np.float32)
     ds_labels = ds_labels.astype(dtype=np.float32)
     return ds, ds_labels
+
+
+# train(None, r"./ds", r'./results')

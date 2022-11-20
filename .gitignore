@@ -17,6 +17,8 @@ brudnopis.py
 5-people-csvs/
 jojo
 jojo-csv
+wandb/
+ds/
 
 workspace.code-workspace
 notes.md

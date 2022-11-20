@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default=r'./video')
 parser.add_argument('--pic', type=str, default=r'./input')
 parser.add_argument('--csv', type=str, default=r'./output')
+parser.add_argument('--ds', type=str, default='./ds')
 parser.add_argument('--results', type=str, default=r'./results')
 parser.add_argument('--results-final', type=str, default=r'./results_final')
 parser.add_argument('--results-graphs', type=str, default=r'./results_graphs')
@@ -21,8 +22,8 @@ parser.add_argument('--model', type=str, default='li')
 parser.add_argument('--logs', type=str, default=r'./logs')
 # 0 - no, 1 - results, 2 - all dirs
 parser.add_argument('--clear_dir', type=int, default=0)
-parser.add_argument('--skip-vid2pic', type=int, default=0)
-parser.add_argument('--skip-movenet', type=int, default=0)
+parser.add_argument('--skip-vid2pic', type=int, default=1)
+parser.add_argument('--skip-movenet', type=int, default=1)
 parser.add_argument('--skip-learning', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=10)
 args = parser.parse_args()
@@ -45,10 +46,11 @@ def main():
 
     # ################# KEYPOINTS EXTRACTION
     if not args.skip_movenet:
-        if not os.path.exists(args.csv):
-            os.makedirs(args.csv)
-        csvs = mn.movenet(pic_dir_paths, input_vid_names,
-                          args.csv, pose_type, args.model)
+        csvs = mn.movenet(
+            pic_paths=[r'input/0_slouch', r'input/1_straight'],
+            pic_dir_names=['slouch', 'straight'],
+            output_path=args.csv,
+            model_type=args.model)
     else:
         csvs = None
         print("skipping movenet")
@@ -62,10 +64,9 @@ def main():
         if not os.path.exists(args.results_graphs):
             os.makedirs(args.results_graphs)
 
-        splits = t.train(csvs, args.csv, args.results,
-                         args.results_final, args.epochs)
-        dis.disp(args.results_final, args.results_graphs, splits, args.epochs)
-        post.post()
+        splits = t.train(r'./ds', args.results, args.epochs)
+        # dis.disp(args.results_final, args.results_graphs, splits, args.epochs)
+        # post.post()
 
     print("STOP")
 

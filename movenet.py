@@ -11,7 +11,7 @@ import save_utils as su
 import cropping as cr
 
 
-def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
+def movenet(pic_paths, pic_dir_names, output_path, model_type="li"):
     # get input folder name to create output file name
     # input_dir_name = os.path.basename(pic_path).split("./", 1)[0]
     # start_date = datetime.now().strftime("--%H-%M--%d-%m-%Y")
@@ -22,9 +22,12 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
 
     movenet, input_size = choose_model(model_type)
 
-    for pp, ocsv, pose in tqdm(zip(pic_paths, output_csv_dir_names, pose_type), desc="VID", ascii=True, total=len(pic_paths)):
+    for pp, ocsv in tqdm(zip(pic_paths, output_csv_dir_names), desc="VID", ascii=True, total=len(pic_paths)):
         filenames = ut.get_filenames(0, pp)
         n_images = len(filenames)
+
+        # determin pose type from file name
+        pose = int(pp.split("/", 1)[-1].split("_", 1)[0])
 
         initial_image = tf.io.read_file(filenames[0])
         initial_image = tf.image.decode_jpeg(initial_image)
@@ -35,6 +38,9 @@ def movenet(pic_paths, pic_dir_names, output_path, pose_type, model_type="li"):
         start = time.time()
 
         # PREPARE CSV FILE
+        # clear the file
+        open(ocsv, "w").close()
+        # set file for writing
         csv_file = open(ocsv, "ab")
         np.savetxt(csv_file, su.KEYPOINT_LABELS, delimiter=",", fmt="%s")
 
