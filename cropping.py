@@ -3,6 +3,7 @@
 import save_utils as su
 import numpy as np
 import tensorflow as tf
+import drawing_util as du
 
 # Confidence score to determine whether a keypoint prediction is reliable.
 MIN_CROP_KEYPOINT_SCORE = 0.2
@@ -44,11 +45,11 @@ def torso_visible(keypoints):
     """
     return ((keypoints[0, 0, du.KEYPOINT_DICT['left_hip'], 2] >
              MIN_CROP_KEYPOINT_SCORE or
-            keypoints[0, 0, du.KEYPOINT_DICT['right_hip'], 2] >
+             keypoints[0, 0, du.KEYPOINT_DICT['right_hip'], 2] >
              MIN_CROP_KEYPOINT_SCORE) and
             (keypoints[0, 0, du.KEYPOINT_DICT['left_shoulder'], 2] >
              MIN_CROP_KEYPOINT_SCORE or
-            keypoints[0, 0, du.KEYPOINT_DICT['right_shoulder'], 2] >
+             keypoints[0, 0, du.KEYPOINT_DICT['right_shoulder'], 2] >
              MIN_CROP_KEYPOINT_SCORE))
 
 

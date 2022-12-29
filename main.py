@@ -21,11 +21,11 @@ parser.add_argument('--results-graphs', type=str, default=r'./results_graphs')
 parser.add_argument('--model', type=str, default='li')
 parser.add_argument('--logs', type=str, default=r'./logs')
 # 0 - no, 1 - results, 2 - all dirs
-parser.add_argument('--clear_dir', type=int, default=0)
+parser.add_argument('--clear_dir', type=int, default=1)
 parser.add_argument('--skip-vid2pic', type=int, default=1)
 parser.add_argument('--skip-movenet', type=int, default=1)
 parser.add_argument('--skip-learning', type=int, default=0)
-parser.add_argument('--epochs', type=int, default=10)
+parser.add_argument('--epochs', type=int, default=50)
 args = parser.parse_args()
 
 

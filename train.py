@@ -16,7 +16,7 @@ import wandb
 BATCH_SIZE = 128
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 os.environ['AUTOGRAPH_VERBOSITY'] = '0'
-wandb.init(project="Pose", sync_tensorboard=True)
+# wandb.init(project="Pose", sync_tensorboard=True)
 
 
 def train(output, result_path, epochs=10):
@@ -72,7 +72,8 @@ def train(output, result_path, epochs=10):
                     get_history_logger(result_path, model_name)
                 ],
                     validation_data=validate, verbose=0)
-    wandb.finish()
+                model.save('lightning/{experiment_name}.h5'.format())
+    # wandb.finish()
 
 
 def get_tensorboard_name(model_name):
