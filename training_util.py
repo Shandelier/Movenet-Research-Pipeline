@@ -1,6 +1,6 @@
 import tensorflow as tf
 # import tensorflow_model_analysis as tfma
-from tensorflow.keras import layers, regularizers
+from tensorflow.keras import layers, regularizers, optimizers
 from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score
 from imblearn.metrics import geometric_mean_score
 
@@ -54,8 +54,11 @@ def get_models_and_names(first_layer):
         layers.Dense(1, activation='sigmoid')
     ])
     model.compile(loss='binary_crossentropy',
-                  optimizer='Adam',
-                  metrics=METRICS)
+                  optimizer=optimizers.Adam(learning_rate=optimizers.schedules.ExponentialDecay(
+                      initial_learning_rate=0.0007,
+                      decay_steps=52*1000,
+                      decay_rate=1,
+                      staircase=True)))
     models.append(
         model
     )

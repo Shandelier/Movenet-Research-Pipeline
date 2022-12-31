@@ -75,12 +75,15 @@ def clear_dirs():
     results_files = glob.glob(os.path.join(args.results, '*'))
     results_final_files = glob.glob(os.path.join(args.results_final, '*'))
     results_graphs_files = glob.glob(os.path.join(args.results_graphs, '*'))
+    models_files = glob.glob(os.path.join('./models/classifier', '*'))
 
     for f in results_files:
         os.remove(f)
     for f in results_final_files:
         os.remove(f)
     for f in results_graphs_files:
+        os.remove(f)
+    for f in models_files:
         os.remove(f)
     if os.path.isdir(args.logs):
         shutil.rmtree(args.logs)
